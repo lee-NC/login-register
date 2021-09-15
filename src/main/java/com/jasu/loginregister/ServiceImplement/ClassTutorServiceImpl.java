@@ -43,15 +43,14 @@ public class ClassTutorServiceImpl implements ClassTutorService {
     }
 
     @Override
-    public List<Long> getListClassTutorByUserIdAndState(Long userCreatedId,String state) {
+    public List<ClassTutor> getListClassTutorByUserIdAndState(Long userCreatedId,String state) {
 
-        log.info("Get List class ");
+        log.info("Get List class in service ");
         List<ClassTutor> classTutors = classTutorRepository.findAllByUserCtIdAndState(userCreatedId,state);
-        List<Long> classTutorId = new ArrayList<Long>();
-        for (ClassTutor classTutor:classTutors) {
-            classTutorId.add(classTutor.getClassroomCtId());
+        if (classTutors.isEmpty()){
+            throw new NotFoundException("No class tutor found");
         }
-        return classTutorId;
+        return classTutors;
     }
 
     @Override

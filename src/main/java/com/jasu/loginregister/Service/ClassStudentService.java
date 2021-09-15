@@ -7,7 +7,7 @@ import java.util.List;
 public interface ClassStudentService {
     ClassStudent createClassroomStudent(Long userId, Long id,String state);
 
-    List<Long> getListClassStudentByUserIdAndState(Long userCreatedId,String state);
+    List<ClassStudent> getListClassStudentByUserIdAndState(Long userCreatedId,String state);
 
     Boolean checkRecentClassStudent(Long userId, String state);
 

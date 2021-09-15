@@ -42,14 +42,13 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     }
 
     @Override
-    public List<Long> getListClassStudentByUserIdAndState(Long userCreatedId,String state) {
-        log.info("Create ClassStudent in Service");
+    public List<ClassStudent> getListClassStudentByUserIdAndState(Long userCreatedId,String state) {
+        log.info("Get ClassStudent in Service");
         List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(userCreatedId,state);
-        List<Long> classStudentId = new ArrayList<>();
-        for (ClassStudent classStudent:classStudents) {
-            classStudentId.add(classStudent.getClassroomCsId());
+        if (classStudents.isEmpty()){
+            throw new NotFoundException("No class student found");
         }
-        return classStudentId;
+        return classStudents;
     }
 
     @Override

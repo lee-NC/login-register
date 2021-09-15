@@ -13,6 +13,7 @@ import com.jasu.loginregister.Model.Request.RelatedToClass.CreateClassroomReques
 import com.jasu.loginregister.Model.Request.RelatedToClass.ApplyClassRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateTutorRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
+import com.jasu.loginregister.Model.ValueObject.ClassStatusVo;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -243,8 +244,18 @@ public class TutorController {
         log.info("get list class tutor in Controller");
         Long userId = listClassRequest.getUserId();
         String state = listClassRequest.getState().toUpperCase(Locale.ROOT);
-        List<Long> classIds = classTutorService.getListClassTutorByUserIdAndState(userId,state);
-        List<ClassDto> result = classroomService.getListClass(classIds);
+        List<ClassTutor> classTutors = classTutorService.getListClassTutorByUserIdAndState(userId,state);
+        List<Long> classIds = new ArrayList<Long>();
+        for (ClassTutor classTutor:classTutors) {
+            classIds.add(classTutor.getClassroomCtId());
+        }
+        List<ClassDto> classDtos = classroomService.getListClass(classIds);
+        List<ClassStatusVo> result = new ArrayList<>();
+        for (int i = 0;i< classIds.size();i++){
+            ClassStatusVo classStatusVo = new ClassStatusVo(
+                    classDtos.get(i),classTutors.get(i).getLikeClass());
+            result.add(classStatusVo);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 

@@ -10,6 +10,7 @@ import com.jasu.loginregister.Model.Request.ListClassRequest;
 import com.jasu.loginregister.Model.Request.ListUserRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.*;
 import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
+import com.jasu.loginregister.Model.ValueObject.ClassStatusVo;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -240,8 +241,19 @@ public class StudentController {
         log.info("get list class student sign up in Controller");
         Long userId = listClassRequest.getUserId();
         String state = listClassRequest.getState().toUpperCase(Locale.ROOT);
-        List<Long> classIds = classStudentService.getListClassStudentByUserIdAndState(userId,state);
-        List<ClassDto> result = classroomService.getListClass(classIds);
+        List<ClassStudent> classStudents = classStudentService.getListClassStudentByUserIdAndState(userId,state);
+        List<Long> classIds = new ArrayList<>();
+        for (ClassStudent classStudent:classStudents) {
+            classIds.add(classStudent.getClassroomCsId());
+        }
+        List<ClassDto> classDtos = classroomService.getListClass(classIds);
+
+        List<ClassStatusVo> result = new ArrayList<>();
+        for (int i = 0;i< classIds.size();i++){
+            ClassStatusVo classStatusVo = new ClassStatusVo(
+                    classDtos.get(i),classStudents.get(i).getLikeClass());
+            result.add(classStatusVo);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 

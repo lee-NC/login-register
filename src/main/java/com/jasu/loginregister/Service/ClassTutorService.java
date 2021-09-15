@@ -7,7 +7,7 @@ import java.util.List;
 public interface ClassTutorService {
     ClassTutor createClassroomTutor(Long tutorId, Long classId, String state);
 
-    List<Long> getListClassTutorByUserIdAndState(Long userCreatedId,String state);
+    List<ClassTutor> getListClassTutorByUserIdAndState(Long userCreatedId,String state);
 
     Boolean checkRecentClassTutor(Long userId, String state);
 
