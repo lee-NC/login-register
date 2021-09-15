@@ -12,22 +12,20 @@ import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
 
-@Entity
-@Table(name = "jasu_student")
+@Entity(name = "jasu_student")
 @Data
 public class Student extends BaseEntity{
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",referencedColumnName = "id",updatable = false)
-    private User user;
+    @Column(nullable = false)
+    private Long userStudentId;
 
-    @Column(name = "literacy", nullable = false)
-    private String literacy;
+    @Column(nullable = false)
+    private int grade;
 
-    @Column(name = "assessment")
+    @Column(nullable = false)
     private float assessment;
 
-    @Column()
+    @Column(nullable = false)
     private int numAssessment;
 
     public Student(Long id) {
@@ -37,5 +35,6 @@ public class Student extends BaseEntity{
     public Student() {
         super();
     }
+
 
 }

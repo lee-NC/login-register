@@ -1,16 +1,13 @@
 package com.jasu.loginregister.Exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.http.HttpStatus;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
+@Data
 public class ErrorResponse {
     private HttpStatus status;
     private String message;
+
 }

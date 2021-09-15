@@ -1,10 +1,25 @@
 package com.jasu.loginregister.Service;
 
 import com.jasu.loginregister.Entity.User;
-import com.jasu.loginregister.Model.Dto.UserDto;
-import com.jasu.loginregister.Model.Request.CreateUserRequest;
+import com.jasu.loginregister.Model.Dto.BasicDto.UserDto;
+import com.jasu.loginregister.Model.Request.CreatedToUser.CreateUserRequest;
+import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
+
+import java.util.List;
 
 public interface UserService {
-    public Boolean checkUser(String email);
-    public UserDto findUserByEmailAndPassword(String email,String password);
+
+    User loginWithEmailAndPassword(String email, String password);
+
+    User findByID(Long userCreateId);
+
+    List<User> getListUser(List<Long> userIds);
+
+    UserDto createUser(CreateUserRequest createUserRequest);
+
+    User updateUser(UpdateUserRequest req, Long id);
+
+    String deleteUser(Long id);
+
+    void updateUser(User checkUser);
 }

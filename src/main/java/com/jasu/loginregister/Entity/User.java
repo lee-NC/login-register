@@ -1,17 +1,12 @@
 package com.jasu.loginregister.Entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-@Entity
-@Table(name = "jasu_user")
+@Entity(name = "jasu_user")
 @Data
 @NoArgsConstructor
 public class User extends BaseEntity {
@@ -20,32 +15,44 @@ public class User extends BaseEntity {
         super(id);
     }
 
+    @Column(nullable = false)
     private String fullName;
 
+    @Column(nullable = false,unique = true)
     private String email;
 
+    @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
     private String gender;
 
     private String address;
 
-    private Date birthday;
+    private String birthday;
 
     private String phoneNumber;
 
+    @Column(nullable = false)
     private Long coin;
 
+    @Column(nullable = false)
     private String state;
 
+    @Column()
     private String avatar;
 
+    @Column(nullable = false)
     private String lastLogin;
 
+    @Column(nullable = false)
     private String lastActive;
 
+    @Column(nullable = false)
     private int numActive;
 
-    private String roleKey;
-
+    public User(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
 }

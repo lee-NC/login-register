@@ -10,34 +10,47 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Entity
-@Table(name = "jasu_classroom")
+@Entity(name = "jasu_classroom")
 @Data
 public class Classroom  extends BaseEntity{
 
-    private Long tutorTeachId;
 
+    private Long userTeachId;
+
+    @Column(nullable = false)
     private int maxNum;
 
+    @Column(nullable = false,length = 10)
     private String type;
 
+    @Column(nullable = false)
     private int currentNum;
 
+    @Column(nullable = false)
     private String subject;
 
+    @Column(nullable = false)
     private int grade;
 
-    private String schedule;
+    @Column()
+    private String note;
 
-    private Date beginDay;
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @JoinTable(name = "jasu_schedule",joinColumns = {@JoinColumn(name = "classroom_schedule_id",referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "lesson_schedule_id",referencedColumnName = "id")})
+    private List<Lesson> lesson;
 
-    private Date endDay;
+    @Column(nullable = false)
+    private Long fee;
 
+    @Column(nullable = false)
+    private int numLesson;
+
+    @Column(nullable = false)
+    private String beginDay;
+
+    @Column(nullable = false)
     private String state;
-
-    public Classroom(Long id) {
-        super(id);
-    }
 
     public Classroom() {
     }

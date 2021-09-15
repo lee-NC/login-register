@@ -1,8 +1,16 @@
 package com.jasu.loginregister.Service;
 
-import com.jasu.loginregister.Model.Dto.TutorDto;
-import com.jasu.loginregister.Model.Request.CreateTutorRequest;
+import com.jasu.loginregister.Entity.Tutor;
+import com.jasu.loginregister.Model.Request.CreatedToUser.CreateTutorRequest;
+
+import java.util.List;
 
 public interface TutorService {
-    TutorDto createTutor(CreateTutorRequest createTutorRequest);
+    Tutor createTutor(CreateTutorRequest createTutorRequest);
+
+    Tutor findByUserId(Long userId);
+
+    List<Tutor> getByListUserId(List<Long> userIds);
+
+    Tutor updateTutor(Tutor updateTutor);
 }

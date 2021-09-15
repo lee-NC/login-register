@@ -1,26 +1,22 @@
 package com.jasu.loginregister.Entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
-@Entity
-@Table(name = "jasu_role")
+@Entity(name = "jasu_role")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class Role {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String roleName;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private DeRole roleKey;
 
-    private String roleKey;
 }
