@@ -3,7 +3,9 @@ package com.jasu.loginregister.Controller;
 
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Exception.ErrorResponse;
+import com.jasu.loginregister.Jwt.JwtResponse;
 import com.jasu.loginregister.Jwt.JwtUtil;
+import com.jasu.loginregister.Jwt.JwtUtils;
 import com.jasu.loginregister.Model.Dto.BasicDto.*;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
@@ -32,10 +34,16 @@ public class RegistryCotroller {
     private TutorService tutorService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    RoleService roleService;
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    RefreshTokenService refreshTokenService;
 
     @Autowired
     private StudentService studentService;
@@ -51,13 +59,11 @@ public class RegistryCotroller {
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
         User checkUser = userService.loginWithEmailAndPassword(createUserRequest.getEmail(),createUserRequest.getPassword());
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
-        Token token = new Token();
-        token.setToken(jwtUtil.generateToken(userPrincipal));
-        token.setTokenExpDate(jwtUtil.generateExpirationDate());
-        token.setCreatedBy(userPrincipal.getId().toString());
-        tokenService.deleteAllOldToken(checkUser.getId().toString());
-        tokenService.createToken(token);
-        return ResponseEntity.ok(token.getToken());
+        String jwt = jwtUtils.generateJwtToken(userPrincipal);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
+                checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar()));
     }
 
     @PostMapping("/tutor")
@@ -66,6 +72,9 @@ public class RegistryCotroller {
         log.info("Registry Tutor in Controller");
         User checkUser = userService.findByID(createTutorRequest.getUserId());
         if (!userRoleService.existUserRole(createTutorRequest.getUserId(),DeRole.TUTOR.getAuthority())){
+            Role role = roleService.findByRoleKey(DeRole.TUTOR.getAuthority());
+            checkUser.getRoles().add(role);
+            checkUser.setRoles(checkUser.getRoles());
             userService.updateUser(checkUser);
             Tutor tutor = tutorService.createTutor(createTutorRequest);
             TutorDto tutorDto = UserMapper.toTutorDto(tutor,checkUser);
@@ -80,6 +89,9 @@ public class RegistryCotroller {
         log.info("Registry Student in Controller");
         User checkUser = userService.findByID(createStudentRequest.getUserId());
         if (!userRoleService.existUserRole(checkUser.getId(), DeRole.STUDENT.getAuthority())){
+            Role role = roleService.findByRoleKey(DeRole.STUDENT.getAuthority());
+            checkUser.getRoles().add(role);
+            checkUser.setRoles(checkUser.getRoles());
             userService.updateUser(checkUser);
             Student student = studentService.createStudent(createStudentRequest);
             StudentDto studentDto = UserMapper.toStudentDto(student,checkUser);

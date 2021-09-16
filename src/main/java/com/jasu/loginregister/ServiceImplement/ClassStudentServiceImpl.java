@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.STATE_REJECTED;
+import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
 
 @Service
 @Slf4j
@@ -28,17 +28,10 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     private ClassStudentRepository classStudentRepository;
 
     @Override
-    public ClassStudent createClassroomStudent(Long userId, Long classId,String state) {
+    public void createClassroomStudent(Long userId, Long classId,String state) {
         log.info("Create ClassStudent in Service");
         ClassStudent classStudent = ClassMapper.toClassStudent(userId,classId,state);
-        ClassStudent result = null;
-        try{
-            classStudentRepository.saveAndFlush(classStudent);
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-
-        return result;
+        classStudentRepository.saveAndFlush(classStudent);
     }
 
     @Override
@@ -62,11 +55,14 @@ public class ClassStudentServiceImpl implements ClassStudentService {
 
         //get list recent class
         List<ClassStudent> classStudents= classStudentRepository.findAllByUserCsIdAndState(userId,state);
+        if (classStudents.isEmpty()){
+            return true;
+        }
 
         //set rank for each state
         int limitRank = 0;
-        if (state.equals("CREATE")) limitRank = 3;
-        if (state.equals("SIGNUP")) limitRank = 5;
+        if (state.equals(STATE_CREATE)) limitRank = 3;
+        if (state.equals(STATE_APPLY)) limitRank = 5;
 
         if (classStudents.size()>limitRank) {
             classStudents = classStudents.subList(classStudents.size()-limitRank,classStudents.size());
@@ -121,6 +117,12 @@ public class ClassStudentServiceImpl implements ClassStudentService {
             throw new NotFoundException("No class student found");
         }
         return classStudent;
+    }
+
+    @Override
+    public Boolean existByClassIdAndUserId(Long classId, Long userId) {
+        log.info("Check exist in Service");
+        return classStudentRepository.existsByClassroomCsIdAndUserCsId(classId,userId);
     }
 
 

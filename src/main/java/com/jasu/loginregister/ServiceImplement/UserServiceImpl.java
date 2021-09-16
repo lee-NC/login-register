@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
     public UserDto createUser(CreateUserRequest createUserRequest) {
         User user = UserMapper.toUser(createUserRequest);
         // Check email exist
-        if (userRepository.findByEmail(user.getEmail()) != null) {
+        if (userRepository.existsByEmail(createUserRequest.getEmail())) {
             throw new DuplicateRecordException("Email is already in use");
         }
         return UserMapper.toUserDto(userRepository.saveAndFlush(user));
@@ -113,6 +113,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateUser(User checkUser) {
         userRepository.saveAndFlush(checkUser);
+    }
+
+    @Override
+    public User findByEmail(String username) {
+        log.info("Find user by email in Service");
+        User result = userRepository.findByEmail(username);
+        if (result == null){
+            throw new NotFoundException("No user found");
+        }
+        return result;
     }
 
     @Override

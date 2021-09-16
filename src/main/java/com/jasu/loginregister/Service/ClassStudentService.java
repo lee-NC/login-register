@@ -5,7 +5,7 @@ import com.jasu.loginregister.Entity.ClassStudent;
 import java.util.List;
 
 public interface ClassStudentService {
-    ClassStudent createClassroomStudent(Long userId, Long id,String state);
+    void createClassroomStudent(Long userId, Long id,String state);
 
     List<ClassStudent> getListClassStudentByUserIdAndState(Long userCreatedId,String state);
 
@@ -18,4 +18,6 @@ public interface ClassStudentService {
     Boolean rejectStudentInAClassroom(Long classId, String reject);
 
     ClassStudent findByClassIdAndUserId(Long classId, Long userApprovedId);
+
+    Boolean existByClassIdAndUserId(Long classId, Long userApplyId);
 }

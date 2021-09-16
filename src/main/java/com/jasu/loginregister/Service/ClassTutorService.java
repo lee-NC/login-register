@@ -5,7 +5,7 @@ import com.jasu.loginregister.Entity.ClassTutor;
 import java.util.List;
 
 public interface ClassTutorService {
-    ClassTutor createClassroomTutor(Long tutorId, Long classId, String state);
+    void createClassroomTutor(Long tutorId, Long classId, String state);
 
     List<ClassTutor> getListClassTutorByUserIdAndState(Long userCreatedId,String state);
 

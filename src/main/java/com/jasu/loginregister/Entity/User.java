@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name = "jasu_user")
@@ -50,6 +51,12 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private int numActive;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(	name = "jasu_user_roles",
+            joinColumns = @JoinColumn(name = "user_ur_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_ur_id"))
+    private Set<Role> roles = new HashSet<>();
 
     public User(String email, String password) {
         this.email = email;

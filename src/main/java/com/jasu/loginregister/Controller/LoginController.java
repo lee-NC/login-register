@@ -2,12 +2,16 @@ package com.jasu.loginregister.Controller;
 
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Exception.ErrorResponse;
+import com.jasu.loginregister.Exception.ForbiddenException;
+import com.jasu.loginregister.Jwt.JwtResponse;
 import com.jasu.loginregister.Jwt.JwtUtil;
+import com.jasu.loginregister.Jwt.JwtUtils;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
 import com.jasu.loginregister.Model.Request.LogOutRequest;
 import com.jasu.loginregister.Model.Request.LoginRequest;
 import com.jasu.loginregister.Model.Request.TokenRefreshRequest;
+import com.jasu.loginregister.Service.RefreshTokenService;
 import com.jasu.loginregister.Service.TokenService;
 import com.jasu.loginregister.Service.UserRoleService;
 import com.jasu.loginregister.Service.UserService;
@@ -15,7 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,7 +34,9 @@ import javax.validation.Valid;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
 
@@ -41,49 +51,46 @@ public class LoginController {
     private JwtUtil jwtUtil;
 
     @Autowired
+    JwtUtils jwtUtils;
+
+    @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    RefreshTokenService refreshTokenService;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody User user){
         log.info("Login in Controller");
         User checkUser = userService.loginWithEmailAndPassword(user.getEmail(),user.getPassword());
+        UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
+
         if (tokenService.checkTimeLogin(checkUser.getId().toString())){
-            UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
-            Token token = new Token();
-            token.setToken(jwtUtil.generateToken(userPrincipal));
-            token.setTokenExpDate(jwtUtil.generateExpirationDate());
-            token.setCreatedBy(userPrincipal.getId().toString());
-            tokenService.deleteAllOldToken(checkUser.getId().toString());
-            tokenService.createToken(token);
-            return ResponseEntity.ok(token.getToken());
+            String jwt = jwtUtils.generateJwtToken(userPrincipal);
+
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+
+            return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
+                    checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar()));
         }
-        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.FORBIDDEN,"You login so many time, please check it later"));
+        return ResponseEntity.badRequest().body(new ForbiddenException("ACCESS DENIED"));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
-        UserPrincipal user = null;
-        Token token = null;
 
-        if (StringUtils.hasText(requestRefreshToken) && requestRefreshToken.startsWith("Token ")) {
-            String jwt = requestRefreshToken.substring(6);
-            user = jwtUtil.getUserFromToken(jwt);
-            token = tokenService.findByToken(jwt);
-        }
-        if (null != user
-                && null != token
-                && token.getTokenExpDate().compareTo(new Date())<1
-                && !token.getDeleted()
-                && user.getId().equals(Long.parseLong(token.getCreatedBy()))) {
-            token.setToken(jwtUtil.generateToken(user));
-            token.setTokenExpDate(jwtUtil.generateExpirationDate());
-            token.setCreatedBy(user.getId().toString());
-            tokenService.deleteAllOldToken(user.getId().toString());
-            tokenService.createToken(token);
-            return ResponseEntity.ok(token.getToken());
-        }
-        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.FORBIDDEN,"ACCESS DENIED"));
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String token = jwtUtils.generateTokenFromUsername(user.getEmail());
+                    return ResponseEntity.ok(token);
+                })
+                .orElseThrow(() -> new ForbiddenException("ACCESS DENIED"));
     }
 
     @PostMapping("/logout")

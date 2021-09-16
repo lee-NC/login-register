@@ -29,7 +29,8 @@ public class DefineEntityStateMessage {
 
     //define number
     public static final int YEAR_ACHIEVEMENT = 1970;//thoi gian nam bat dau
-    public static final long TIME_EXP_DATE = 864000000;//là thời gian một ngày tính theo giây
+    public static final long REFRESH_EXP_DATE = 86400000l;//là thời gian một ngày tính theo giây
+    public static final long ACCESS_EXP_DATE = 3600000l;//là thời gian một giờ tính theo giây
 
 
     //Define String

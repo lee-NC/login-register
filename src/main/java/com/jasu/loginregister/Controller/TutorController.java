@@ -76,10 +76,8 @@ public class TutorController {
 
         if (checkTimes && checkSubject!=null){
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.TUTOR.getAuthority(), userCreatedId);
-            ClassTutor classTutor = classTutorService.createClassroomTutor(userCreatedId,classDto.getId(),STATE_CREATE);
-            if (classTutor!=null){
-                return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreatedId));
-            }
+            classTutorService.createClassroomTutor(userCreatedId,classDto.getId(),STATE_CREATE);
+            return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreatedId));
         }
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
     }
@@ -96,16 +94,14 @@ public class TutorController {
         Classroom classroom = classroomService.findById(classId);
 
         Boolean checkTimes = classTutorService.checkRecentClassTutor(userApplyId,STATE_APPLY);
-
         if (classroom.getUserTeachId()==null
                 &&classroom.getState().equals(STATE_WAITING)
                 &&userApplyId!=Long.parseLong(classroom.getCreatedBy())
-                &&checkTimes
-        ){
+                &&checkTimes){
 
             log.info("Tutor apply class in Controller");
             if (!classTutorService.existByClassIdAndUserId(classId,userApplyId)){
-                ClassTutor classTutor = classTutorService.createClassroomTutor(userApplyId,classId,STATE_APPLY);
+                classTutorService.createClassroomTutor(userApplyId,classId,STATE_APPLY);
             }
             else {
                 ClassTutor checkClassTutor = classTutorService.findByClassIdAndUserId(classId,userApplyId);

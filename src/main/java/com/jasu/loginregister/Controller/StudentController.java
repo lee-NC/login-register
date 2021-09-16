@@ -76,7 +76,7 @@ public class StudentController {
         if (checkTimes && checkSubject!=null
                 && student.getGrade() == createClassroomRequest.getGrade()){
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.STUDENT.getAuthority(), userCreateId);
-            ClassStudent classStudent = classStudentService.createClassroomStudent(userCreateId,classDto.getId(),STATE_CREATE);
+            classStudentService.createClassroomStudent(userCreateId,classDto.getId(),STATE_CREATE);
             return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreateId));
         }
         return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
@@ -97,13 +97,14 @@ public class StudentController {
 
         Boolean checkTimes = classStudentService.checkRecentClassStudent(userApplyId,STATE_APPLY);
 
-        if (classroom.getUserTeachId().equals(Long.parseLong(classroom.getCreatedBy()))
+        if (classroom.getUserTeachId()==Long.parseLong(classroom.getCreatedBy())
                 &&checkTimes
-                &&userApplyId.equals(classroom.getUserTeachId())
+                &&!userApplyId.equals(classroom.getUserTeachId())
                 &&student.getGrade()>=classroom.getGrade()
                 &&classroom.getState().equals(STATE_WAITING)){
 
-            if (classStudentService.findByClassIdAndUserId(classId,userApplyId)==null){
+            log.info("Student apply a class in Controller");
+            if (!classStudentService.existByClassIdAndUserId(classId,userApplyId)){
                 classStudentService.createClassroomStudent(userApplyId,classId, STATE_APPLY);
             }
             else{

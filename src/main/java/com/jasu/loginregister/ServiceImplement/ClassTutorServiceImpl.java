@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.STATE_REJECTED;
+import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
 
 @Service
 @Slf4j
@@ -29,17 +29,10 @@ public class ClassTutorServiceImpl implements ClassTutorService {
     private ClassTutorRepository classTutorRepository;
 
     @Override
-    public ClassTutor createClassroomTutor(Long tutorId, Long classId,String state) {
+    public void createClassroomTutor(Long tutorId, Long classId,String state) {
         log.info("Create class tutor in Service ");
         ClassTutor classTutor = ClassMapper.toClassTutor(tutorId, classId, state);
-        ClassTutor result = null;
-        try{
-            result =  classTutorRepository.saveAndFlush(classTutor);
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-
-        return result;
+        classTutorRepository.saveAndFlush(classTutor);
     }
 
     @Override
@@ -64,11 +57,14 @@ public class ClassTutorServiceImpl implements ClassTutorService {
 
         //get list recent class
         List<ClassTutor> classTutors = classTutorRepository.findAllByUserCtIdAndState(userId,state);
+        if (classTutors.isEmpty()){
+            return true;
+        }
 
         //set rank for each state
         int limitRank = 0;
-        if (state.equals("CREATE")) limitRank = 3;
-        if (state.equals("SIGNUP")) limitRank = 5;
+        if (state.equals(STATE_CREATE)) limitRank = 3;
+        if (state.equals(STATE_APPLY)) limitRank = 5;
 
         if (classTutors.size()>limitRank) {
             classTutors = classTutors.subList(classTutors.size()-limitRank,classTutors.size());

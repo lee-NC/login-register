@@ -17,10 +17,7 @@ public class UserMapper {
     public static UserPrincipal toUserPrincipal(User user) {
         UserPrincipal tmp = new UserPrincipal();
         tmp.setId(user.getId());
-        tmp.setFullName(user.getFullName());
-        tmp.setCoin(user.getCoin());
-        tmp.setAvatar(user.getAvatar());
-        tmp.setNumActive(user.getNumActive());
+        tmp.setUsername(user.getEmail());
         return tmp;
     }
 

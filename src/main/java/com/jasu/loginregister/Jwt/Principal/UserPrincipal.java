@@ -10,13 +10,7 @@ public class UserPrincipal implements UserDetails {
 
     private Long id;
 
-    private String fullName;
-
-    private String avatar;
-
-    private Long coin;
-
-    private int numActive;
+    private String username;
 
     private Collection authorities;
 
@@ -26,10 +20,6 @@ public class UserPrincipal implements UserDetails {
         return null;
     }
 
-    @Override
-    public String getUsername() {
-        return null;
-    }
 
     @Override
     public boolean isAccountNonExpired() {
