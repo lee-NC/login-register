@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.jasu.loginregister.Entity.DefineEntityStateMessage.REFRESH_EXP_DATE;
@@ -59,7 +60,33 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   @Transactional
-  public int deleteByUserId(Long userId) {
-    return refreshTokenRepository.deleteByUser(userRepository.findById(userId).get());
+  public void deleteByUserId(Long userId) {
+    log.info("Delete old token");
+    Set<RefreshToken> tokens = refreshTokenRepository.findAllByCreatedByAndDeleted(userId,false);
+    for (RefreshToken token: tokens){
+      token.setDeleted(true);
+      refreshTokenRepository.saveAndFlush(token);
+    }
+  }
+
+  @Override
+  public boolean checkTimeLogin(String userId) {
+    log.info("Check recent token in Service");
+
+    //get Now day
+    SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+    Date date = new Date();
+    String []nowDay = formatter.format(date).split("/");
+
+    int limitRank = 15;
+    //get list recent token
+    Set<RefreshToken> tokens = refreshTokenRepository.findAllByCreatedBy(userId);
+    if (tokens.isEmpty()) return true;
+    for (RefreshToken token: tokens){
+      String []day = token.getCreatedAt().split("/");
+      if (Integer.parseInt(day[1])==Integer.parseInt((nowDay[0])))   limitRank--;
+    }
+    if (limitRank <= 0) return false;
+    return true;
   }
 }

@@ -4,7 +4,6 @@ package com.jasu.loginregister.Controller;
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Exception.ErrorResponse;
 import com.jasu.loginregister.Jwt.JwtResponse;
-import com.jasu.loginregister.Jwt.JwtUtil;
 import com.jasu.loginregister.Jwt.JwtUtils;
 import com.jasu.loginregister.Model.Dto.BasicDto.*;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
@@ -38,9 +37,6 @@ public class RegistryCotroller {
 
     @Autowired
     RoleService roleService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     RefreshTokenService refreshTokenService;
