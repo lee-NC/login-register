@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Model.Request.UpdateToUser;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jasu.loginregister.Model.Request.CreateAddressRequest;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,13 +33,7 @@ public class UpdateUserRequest {
     )
     private String gender;
 
-
-    @Size(max= 255,min = 20, message = "Please provide a valid address")
-    @ApiModelProperty(
-            example="số nhà XX, đường/phố XX,phường/xã XX, quận/huyện XX, thành phố XX ",
-            notes="Address cannot be empty"
-    )
-    private String address;
+    private CreateAddressRequest createAddressRequest;
 
     @ApiModelProperty(
             example="YYYY-MM-dd",

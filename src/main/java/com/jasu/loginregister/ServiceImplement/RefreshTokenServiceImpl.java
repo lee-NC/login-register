@@ -13,10 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Date;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.jasu.loginregister.Entity.DefineEntityStateMessage.REFRESH_EXP_DATE;
 
@@ -80,8 +77,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     int limitRank = 15;
     //get list recent token
-    Set<RefreshToken> tokens = refreshTokenRepository.findAllByCreatedBy(userId);
-    if (tokens.isEmpty()) return true;
+    List<RefreshToken> tokens = refreshTokenRepository.findAllByCreatedBy(userId);
+    if (tokens.isEmpty()) {
+      return true;
+    }
+    log.info("Check recent token in Service");
     for (RefreshToken token: tokens){
       String []day = token.getCreatedAt().split("/");
       if (Integer.parseInt(day[1])==Integer.parseInt((nowDay[0])))   limitRank--;

@@ -6,7 +6,10 @@ import com.jasu.loginregister.Model.Dto.DetailDto.StudentDetailDto;
 import com.jasu.loginregister.Model.Dto.DetailDto.TutorDetailDto;
 import com.jasu.loginregister.Model.Dto.DetailDto.UserDetailDto;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
+import com.jasu.loginregister.Model.Request.CreateAddressRequest;
 import com.jasu.loginregister.Model.Request.CreatedToUser.*;
+import com.jasu.loginregister.Service.RoleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.text.SimpleDateFormat;
@@ -64,11 +67,12 @@ public class UserMapper {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatterDate = new SimpleDateFormat("dd/MM/yyyy");
         Date date = new Date();
+        Address address = toAddress(req.getCreateAddressRequest());
         User user = new User();
+
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
-        user.setPhoneNumber(req.getPhoneNumber());
-        user.setAddress(req.getAddress());
+
         user.setCoin(0L);
         user.setState("LOGIN");
         user.setDeleted(false);
@@ -79,12 +83,24 @@ public class UserMapper {
         user.setCreatedBy(req.getEmail());
         user.setBirthday(formatterDate.format(req.getBirthday()));
         user.setGender(req.getGender().toUpperCase(Locale.ROOT));
-        Set<DeRole> roles = new HashSet<>();
-        roles.add(DeRole.USER);
-//        user.setRoles(roles);
         String hash = BCrypt.hashpw(req.getPassword(), BCrypt.gensalt(12));
         user.setPassword(hash);
+        address.setUser(user);
+        user.setAddress(address);
         return user;
+    }
+
+    public static Address toAddress(CreateAddressRequest createAddressRequest) {
+        Address address = new Address();
+        address.setAddressDetail(createAddressRequest.getAddressDetail());
+        if (createAddressRequest.getWard() != null){
+            address.setWard(createAddressRequest.getWard());
+        }
+        address.setDistrict(createAddressRequest.getDistrict());
+        address.setProvince(createAddressRequest.getProvince());
+        address.setPhoneNumber(createAddressRequest.getPhoneNumber());
+
+        return address;
     }
 
     public static Tutor toTutor(CreateTutorRequest req) {
@@ -131,13 +147,26 @@ public class UserMapper {
     public static UserDetailDto toUserDetailDto(User user) {
         UserDetailDto userDetailDto = new UserDetailDto();
         userDetailDto.setFullName(user.getFullName());
-        userDetailDto.setAddress(user.getAddress());
+        userDetailDto.setAddressDto(toAddressDto(user.getAddress()));
         userDetailDto.setBirthday(user.getBirthday());
         userDetailDto.setAvatar(user.getAvatar());
         userDetailDto.setGender(user.getGender());
-        userDetailDto.setPhoneNumber(user.getPhoneNumber());
 
         return userDetailDto;
+    }
+
+    private static AddressDto toAddressDto(Address address) {
+        AddressDto addressDto = new AddressDto();
+
+        addressDto.setAddressDetail(address.getAddressDetail());
+        if (address.getWard() != null){
+            address.setWard(address.getWard());
+        }
+        addressDto.setDistrict(address.getDistrict());
+        addressDto.setProvince(address.getProvince());
+        addressDto.setPhoneNumber(address.getPhoneNumber());
+
+        return addressDto;
     }
 
     public static TutorDetailDto toTutorDetailDto(Tutor tutor,User user) {

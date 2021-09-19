@@ -15,7 +15,7 @@ public interface ClassStudentService {
 
     List<Long> getListUserID(Long classId, String state);
 
-    Boolean rejectStudentInAClassroom(Long classId, String reject);
+    Boolean rejectStudentInClassroom(Long classId);
 
     ClassStudent findByClassIdAndUserId(Long classId, Long userApprovedId);
 

@@ -5,6 +5,7 @@ import com.jasu.loginregister.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>
     @Modifying
     int deleteByUser(User user);
 
-    Set<RefreshToken> findAllByCreatedBy(String userId);
+    List<RefreshToken> findAllByCreatedBy(String userId);
 
     Set<RefreshToken> findAllByCreatedByAndDeleted(Long userId, boolean deleted);
 }

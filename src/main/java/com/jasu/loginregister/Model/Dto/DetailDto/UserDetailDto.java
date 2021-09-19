@@ -1,5 +1,7 @@
 package com.jasu.loginregister.Model.Dto.DetailDto;
 
+import com.jasu.loginregister.Entity.Address;
+import com.jasu.loginregister.Model.Dto.BasicDto.AddressDto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,7 +15,7 @@ public class UserDetailDto {
 
     private String gender;
 
-    private String address;
+    private AddressDto addressDto;
 
     private String birthday;
 

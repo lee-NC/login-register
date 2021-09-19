@@ -15,7 +15,7 @@ public interface ClassTutorService {
 
     List<Long> getListUserID(Long classId, String state);
 
-    boolean rejectAllClassroomTutor(Long classId, String signup);
+    boolean rejectTutorClassroomTutor(Long classId);
 
     ClassTutor findByClassIdAndUserId(Long classId, Long userApprovedId);
 

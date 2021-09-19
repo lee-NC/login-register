@@ -28,11 +28,10 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String gender;
 
-    private String address;
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "user")
+    private Address address;
 
     private String birthday;
-
-    private String phoneNumber;
 
     @Column(nullable = false)
     private Long coin;

@@ -101,9 +101,9 @@ public class ClassTutorServiceImpl implements ClassTutorService {
 
 
     @Override
-    public boolean rejectAllClassroomTutor(Long classId, String state) {
+    public boolean rejectTutorClassroomTutor(Long classId) {
         log.info("Update ClassTutor in Service");
-        List<ClassTutor> classTutors = classTutorRepository.findByClassroomCtIdAndState(classId,state);
+        List<ClassTutor> classTutors = classTutorRepository.findByClassroomCtIdAndState(classId,STATE_APPLY);
         if (classTutors==null)    return false;
         for (ClassTutor classTutor:classTutors) {
             classTutor.setState(STATE_REJECTED);

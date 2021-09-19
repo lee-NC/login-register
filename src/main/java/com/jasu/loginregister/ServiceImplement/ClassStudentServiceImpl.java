@@ -98,9 +98,9 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     }
 
     @Override
-    public Boolean rejectStudentInAClassroom(Long classId, String state) {
+    public Boolean rejectStudentInClassroom(Long classId) {
         log.info("Update ClassStudent in Service");
-        List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(classId,state);
+        List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(classId,STATE_APPLY);
         if (classStudents==null)    return false;
         for (ClassStudent classStudent:classStudents) {
             classStudent.setState(STATE_REJECTED);

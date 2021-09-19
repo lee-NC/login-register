@@ -15,13 +15,13 @@ public interface UserService {
 
     List<User> getListUser(List<Long> userIds);
 
-    UserDto createUser(CreateUserRequest createUserRequest);
+    UserDto createUser(User user);
 
-    User updateUser(UpdateUserRequest req, Long id);
+    User updateDetailUser(UpdateUserRequest req, Long id);
 
     String deleteUser(Long id);
 
     void updateUser(User checkUser);
 
-    User findByEmail(String username);
+    boolean refundUserBeRejected(List<Long> userIds, Long fee);
 }

@@ -18,8 +18,8 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-
-
+import java.util.HashSet;
+import java.util.Set;
 
 @RestController
 @Slf4j
@@ -51,7 +51,12 @@ public class RegistryCotroller {
     @PostMapping("")
     public ResponseEntity<?> registryUser(@Valid @RequestBody CreateUserRequest createUserRequest){
         log.info("Registry User in Controller");
-        UserDto userDto = userService.createUser(createUserRequest);
+        User saveUser = UserMapper.toUser(createUserRequest);
+        Role role = roleService.findByRoleKey(DeRole.USER.getAuthority());
+        Set<Role> roles = new HashSet<>();
+        roles.add(role);
+        saveUser.setRoles(roles);
+        UserDto userDto = userService.createUser(saveUser);
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
         User checkUser = userService.loginWithEmailAndPassword(createUserRequest.getEmail(),createUserRequest.getPassword());
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);

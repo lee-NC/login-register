@@ -1,5 +1,7 @@
 package com.jasu.loginregister.Model.Request.CreatedToUser;
 
+import com.jasu.loginregister.Entity.Address;
+import com.jasu.loginregister.Model.Request.CreateAddressRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,14 +51,7 @@ public class CreateUserRequest {
 
 
     @NotNull(message = "Address is required")
-    @NotEmpty(message = "Address is required")
-    @Size(max= 255,min = 20, message = "Please provide a valid address")
-    @ApiModelProperty(
-            example="số nhà XX, đường/phố XX,phường/xã XX, quận/huyện XX, thành phố XX ",
-            notes="Address cannot be empty",
-            required=true
-    )
-    private String address;
+    private CreateAddressRequest createAddressRequest;
 
 
     @ApiModelProperty(
@@ -65,17 +60,6 @@ public class CreateUserRequest {
             required=true
     )
     private Date birthday;
-
-
-    @NotNull(message = "Phone Number is required")
-    @NotEmpty(message = "Phone Number is required")
-    @Pattern(regexp="(0[3-9])+([0-9]{8})\\b", message = "Please provide a valid phone number")
-    @ApiModelProperty(
-            example="0916976012",
-            notes="Phone cannot be empty",
-            required=true
-    )
-    private String phoneNumber;
 
 
     @NotNull(message = "Password is required")

@@ -1,11 +1,13 @@
 package com.jasu.loginregister.ServiceImplement;
 
+import com.jasu.loginregister.Entity.Address;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.DuplicateRecordException;
 import com.jasu.loginregister.Exception.InternalServerException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Dto.BasicDto.UserDto;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
+import com.jasu.loginregister.Model.Request.CreateAddressRequest;
 import com.jasu.loginregister.Model.Request.CreatedToUser.CreateUserRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
 import com.jasu.loginregister.Repository.UserRepository;
@@ -37,23 +39,23 @@ public class UserServiceImpl implements UserService {
     private static String UPLOAD_DIR = System.getProperty("user.home") + "/upload";
 
     @Override
-    public UserDto createUser(CreateUserRequest createUserRequest) {
-        User user = UserMapper.toUser(createUserRequest);
+    public UserDto createUser(User user) {
         // Check email exist
-        if (userRepository.existsByEmail(createUserRequest.getEmail())) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateRecordException("Email is already in use");
         }
         return UserMapper.toUserDto(userRepository.saveAndFlush(user));
     }
 
     @Override
-    public User updateUser(UpdateUserRequest req, Long id) {
+    public User updateDetailUser(UpdateUserRequest req, Long id) {
         Optional<User> user = userRepository.findById(id);
         if (!user.isPresent()){
             throw new NotFoundException("No user found");
         }
-        if (req.getAddress()!=null){
-            user.get().setAddress(req.getAddress());
+        if (req.getCreateAddressRequest()!=null){
+            Address address = checkAddress(req.getCreateAddressRequest());
+            user.get().setAddress(address);
         }
         if (req.getBirthday()!=null){
             SimpleDateFormat formatterDate = new SimpleDateFormat("dd/MM/yyyy");
@@ -65,10 +67,6 @@ public class UserServiceImpl implements UserService {
 
         if (req.getFullName()!=null){
             user.get().setFullName(req.getFullName());
-        }
-
-        if (req.getPhoneNumber()!=null){
-            user.get().setPhoneNumber(req.getPhoneNumber());
         }
 
         if (req.getAvatar()!=null){
@@ -98,6 +96,26 @@ public class UserServiceImpl implements UserService {
         return userRepository.saveAndFlush(user.get());
     }
 
+    private Address checkAddress(CreateAddressRequest req) {
+        Address address = new Address();
+        if (!req.getAddressDetail().isEmpty()){
+            address.setAddressDetail(req.getAddressDetail());
+        }
+        if (!req.getWard().isEmpty()){
+            address.setWard(req.getWard());
+        }
+        if (!req.getDistrict().isEmpty()){
+            address.setDistrict(req.getDistrict());
+        }
+        if (!req.getPhoneNumber().isEmpty()){
+            address.setPhoneNumber(req.getPhoneNumber());
+        }
+        if (!req.getProvince().isEmpty()){
+            address.setProvince(req.getProvince());
+        }
+        return address;
+    }
+
     @Override
     public String deleteUser(Long id) {
         log.info("delete user by id in Service");
@@ -116,13 +134,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findByEmail(String username) {
-        log.info("Find user by email in Service");
-        User result = userRepository.findByEmail(username);
-        if (result == null){
-            throw new NotFoundException("No user found");
+    public boolean refundUserBeRejected(List<Long> userIds, Long fee) {
+        List<User> userList = userRepository.findAllById(userIds);
+        if (userList.isEmpty()){
+            return false;
         }
-        return result;
+        for (User user: userList){
+            user.setCoin(user.getCoin()+fee);
+            userRepository.saveAndFlush(user);
+        }
+        return true;
     }
 
     @Override

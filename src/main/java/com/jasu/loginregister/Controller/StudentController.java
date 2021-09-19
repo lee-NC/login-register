@@ -90,10 +90,16 @@ public class StudentController {
         log.info("Student apply a class in Controller");
 
         Long userApplyId = applyClassRequest.getUserId();
+        User checkUser = userService.findByID(userApplyId);
         Student student = studentService.findByUserId(userApplyId);
 
         Long classId = applyClassRequest.getClassId();
         Classroom classroom = classroomService.findById(classId);
+
+        Long fee = ((classroom.getFee()/10)/classroom.getMaxNum())/100;
+        if (checkUser.getCoin()<fee){
+            return ResponseEntity.badRequest().body("There is not enough coin in the account right now");
+        }
 
         Boolean checkTimes = classStudentService.checkRecentClassStudent(userApplyId,STATE_APPLY);
 
@@ -106,6 +112,9 @@ public class StudentController {
             log.info("Student apply a class in Controller");
             if (!classStudentService.existByClassIdAndUserId(classId,userApplyId)){
                 classStudentService.createClassroomStudent(userApplyId,classId, STATE_APPLY);
+                checkUser.setCoin(checkUser.getCoin()-fee);
+                userService.updateUser(checkUser);
+                return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
             }
             else{
                 ClassStudent checkClassStudent = classStudentService.findByClassIdAndUserId(classId,userApplyId);
@@ -115,9 +124,13 @@ public class StudentController {
                 if (checkClassStudent.getState().equals(STATE_CANCELED)){
                     checkClassStudent.setState(STATE_APPLY);
                     Boolean updateClassStudent= classStudentService.updateClassroomStudent(checkClassStudent);
+                    if (updateClassStudent){
+                        checkUser.setCoin(checkUser.getCoin()-fee);
+                        userService.updateUser(checkUser);
+                        return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
+                    }
                 }
             }
-            return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
         }
 
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
@@ -139,34 +152,36 @@ public class StudentController {
         if (checkClassTutor==null||!checkClassTutor.getState().equals(STATE_APPLY)){
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_NOT_FOUND));
         }
-
         Classroom classroom = classroomService.findById(classId);
+        Boolean checkRole = userRoleService.existUserRole(userApprovedId, DeRole.TUTOR.getAuthority());
 
         if (userCreatedId.equals(Long.parseLong(classroom.getCreatedBy()))
-                &&userCreatedId.equals(userApprovedId)
-                &&userRoleService.existUserRole(userApprovedId, DeRole.TUTOR.getAuthority())
+                &&!userCreatedId.equals(userApprovedId)
+                &&checkRole
                 &&classroom.getState().equals(STATE_WAITING)
                 &&checkClassTutor.getState().equals(STATE_APPLY)
                 &&classroom.getUserTeachId()==null){
 
             classroom.setState(STATE_PROCESSING);
             checkClassTutor.setState(STATE_PROCESSING);
-            classroom.setUserTeachId(approveClassRequest.getUserApprovedId());
-            List <Long> studentIds = new ArrayList<>();
-            studentIds.add(userCreatedId);
+            classroom.setUserTeachId(userApprovedId);
             ClassStudent classStudent = classStudentService.findByClassIdAndUserId(classId,userCreatedId);
             classStudent.setState(STATE_PROCESSING);
             if(classStudentService.updateClassroomStudent(classStudent)
                     &&classTutorService.updateClassroomTutor(checkClassTutor)
-                    &&classTutorService.rejectAllClassroomTutor(classId,STATE_APPLY)
                     &&classroomService.updateClassroom(classroom)!=null
-                    &&tutorStudentSerivce.createListStudentService(classId,userApprovedId,studentIds)){
-
-                return ResponseEntity.ok("Class is starting, check your class");
+                    &&classTutorService.rejectTutorClassroomTutor(classId)){
+                List<Long> tutorBeRejectedId = classTutorService.getListUserID(classId,STATE_REJECTED);
+                Long fee = ((classroom.getFee()/10)/classroom.getMaxNum())/100;
+                List <Long> studentIds = new ArrayList<>();
+                studentIds.add(userCreatedId);
+                if (userService.refundUserBeRejected(tutorBeRejectedId,fee)
+                        &&tutorStudentSerivce.createListStudentService(classId,userApprovedId,studentIds)){
+                    return ResponseEntity.ok("Class is starting, check your class");
+                }
             }
         }
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
-
     }
 
     @PostMapping("/cancel_apply")
@@ -307,7 +322,7 @@ public class StudentController {
     @PreAuthorize("hasAuthority('STUDENT')")
     @Secured("STUDENT")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long id) {
-        User user = userService.updateUser(req, id);
+        User user = userService.updateDetailUser(req, id);
         Student updateStudent = null;
         if (req.getUpdateStudentRequest()!=null){
             Student student = studentService.findByUserId(id);
