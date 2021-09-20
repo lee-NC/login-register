@@ -58,13 +58,13 @@ public class RegistryCotroller {
         saveUser.setRoles(roles);
         UserDto userDto = userService.createUser(saveUser);
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
-        User checkUser = userService.loginWithEmailAndPassword(createUserRequest.getEmail(),createUserRequest.getPassword());
+        User checkUser = userService.findByEmail(createUserRequest.getEmail());
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
         String jwt = jwtUtils.generateJwtToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
 
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
-                checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar()));
+                checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
     @PostMapping("/tutor")

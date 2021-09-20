@@ -22,10 +22,15 @@ public class TutorStudentSerivceImpl implements TutorStudentSerivce {
         if (studentIds.isEmpty()){
             return false;
         }
-        for (Long studentId: studentIds){
-            TutorStudent tutorStudent = UserMapper.toTutorStudent(classId,tutorId,studentId);
-            tutorStudentRepository.save(tutorStudent);
+        try {
+            for (Long studentId: studentIds){
+                TutorStudent tutorStudent = UserMapper.toTutorStudent(classId,tutorId,studentId);
+                tutorStudentRepository.save(tutorStudent);
+            }
+            return true;
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            return false;
         }
-        return true;
     }
 }

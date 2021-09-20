@@ -24,4 +24,6 @@ public interface UserService {
     void updateUser(User checkUser);
 
     boolean refundUserBeRejected(List<Long> userIds, Long fee);
+
+    User findByEmail(String email);
 }

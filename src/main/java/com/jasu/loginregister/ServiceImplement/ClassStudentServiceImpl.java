@@ -30,8 +30,12 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     @Override
     public void createClassroomStudent(Long userId, Long classId,String state) {
         log.info("Create ClassStudent in Service");
-        ClassStudent classStudent = ClassMapper.toClassStudent(userId,classId,state);
-        classStudentRepository.saveAndFlush(classStudent);
+        try {
+            ClassStudent classStudent = ClassMapper.toClassStudent(userId,classId,state);
+            classStudentRepository.saveAndFlush(classStudent);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
@@ -51,28 +55,32 @@ public class ClassStudentServiceImpl implements ClassStudentService {
         //get Now day
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
         Date date = new Date();
-        String []nowDay = formatter.format(date).split("/");
-
-        //get list recent class
-        List<ClassStudent> classStudents= classStudentRepository.findAllByUserCsIdAndState(userId,state);
-        if (classStudents.isEmpty()){
-            return true;
-        }
 
         //set rank for each state
         int limitRank = 0;
         if (state.equals(STATE_CREATE)) limitRank = 3;
         if (state.equals(STATE_APPLY)) limitRank = 5;
+        String []nowDay = formatter.format(date).split("/");
 
-        if (classStudents.size()>limitRank) {
-            classStudents = classStudents.subList(classStudents.size()-limitRank,classStudents.size());
-        }
-
-        for (ClassStudent classStudent:classStudents) {
-            String []day = classStudent.getCreatedAt().split("/");
-            if (Integer.parseInt(day[1])==Integer.parseInt((nowDay[0])))   {
-                limitRank--;
+        try {
+            //get list recent class
+            List<ClassStudent> classStudents= classStudentRepository.findAllByUserCsIdAndState(userId,state);
+            if (classStudents.isEmpty()){
+                return true;
             }
+
+            if (classStudents.size()>limitRank) {
+                classStudents = classStudents.subList(classStudents.size()-limitRank,classStudents.size());
+            }
+
+            for (ClassStudent classStudent:classStudents) {
+                String []day = classStudent.getCreatedAt().split("/");
+                if (Integer.parseInt(day[1])==Integer.parseInt((nowDay[0])))   {
+                    limitRank--;
+                }
+            }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
 
         if (limitRank <= 0) return false;
@@ -82,17 +90,27 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     @Override
     public Boolean updateClassroomStudent(ClassStudent classStudent) {
         log.info("Update ClassStudent in Service");
-        ClassStudent result = classStudentRepository.saveAndFlush(classStudent);
-        if(result!=null) return true;
+        try {
+            ClassStudent result = classStudentRepository.saveAndFlush(classStudent);
+            if(result!=null) return true;
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
         return false;
     }
 
     @Override
     public List<Long> getListUserID(Long classId, String state) {
-        List<ClassStudent> listClassStudent = classStudentRepository.findAllByClassroomCsIdAndState(classId,state);
+        log.info("get List UserID in Service");
         List<Long> listUserId = new ArrayList<>();
-        for(ClassStudent classStudent: listClassStudent){
-            listUserId.add(classStudent.getUserCsId());
+        try {
+            List<ClassStudent> listClassStudent = classStudentRepository.findAllByClassroomCsIdAndState(classId,state);
+
+            for(ClassStudent classStudent: listClassStudent){
+                listUserId.add(classStudent.getUserCsId());
+            }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return listUserId;
     }
@@ -100,20 +118,24 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     @Override
     public Boolean rejectStudentInClassroom(Long classId) {
         log.info("Update ClassStudent in Service");
-        List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(classId,STATE_APPLY);
-        if (classStudents==null)    return false;
-        for (ClassStudent classStudent:classStudents) {
-            classStudent.setState(STATE_REJECTED);
-            classStudentRepository.saveAndFlush(classStudent);
+        try {
+            List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(classId,STATE_APPLY);
+            for (ClassStudent classStudent:classStudents) {
+                classStudent.setState(STATE_REJECTED);
+                classStudentRepository.saveAndFlush(classStudent);
+            }
+            return true;
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
-        return true;
+        return false;
     }
 
     @Override
     public ClassStudent findByClassIdAndUserId(Long classId, Long userId) {
         log.info("Update ClassStudent in Service");
         ClassStudent classStudent = classStudentRepository.findByClassroomCsIdAndUserCsId(classId,userId);
-        if (classStudent.equals(null)){
+        if (classStudent == null){
             throw new NotFoundException("No class student found");
         }
         return classStudent;

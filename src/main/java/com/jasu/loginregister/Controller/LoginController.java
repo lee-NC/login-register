@@ -14,9 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -41,22 +42,24 @@ public class LoginController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody User user){
         log.info("Login in Controller");
+
         User checkUser = userService.loginWithEmailAndPassword(user.getEmail(),user.getPassword());
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
-
         if (refreshTokenService.checkTimeLogin(checkUser.getId().toString())){
+
             String jwt = jwtUtils.generateJwtToken(userPrincipal);
 
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
 
             return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
-                    checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar()));
+                    checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
         }
-        return ResponseEntity.badRequest().body(new ForbiddenException("ACCESS DENIED"));
+        return ResponseEntity.badRequest().body("ACCESS DENIED");
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        log.info("Refresh token in Controller");
         String requestRefreshToken = request.getRefreshToken();
 
         return refreshTokenService.findByToken(requestRefreshToken)
@@ -69,9 +72,16 @@ public class LoginController {
                 .orElseThrow(() -> new ForbiddenException("ACCESS DENIED"));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(@Valid @RequestBody LogOutRequest logOutRequest) {
-       refreshTokenService.deleteByUserId(logOutRequest.getUserId());
-        return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
+    @PutMapping("/logout/{id}")
+    public ResponseEntity<?> logoutUser(@PathVariable("id") Long  userId) {
+        log.info("Logout in Controller");
+        User user = userService.findByID(userId);
+        if (user.getState().equals("LOGOUT")){
+            throw new ForbiddenException("You logged out before.Do you want to log in?");
+        }
+        user.setState("LOGOUT");
+        userService.updateUser(user);
+        refreshTokenService.deleteByUserId(userId);
+        return ResponseEntity.ok("Log out successful!");
     }
 }

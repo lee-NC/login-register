@@ -31,8 +31,12 @@ public class ClassTutorServiceImpl implements ClassTutorService {
     @Override
     public void createClassroomTutor(Long tutorId, Long classId,String state) {
         log.info("Create class tutor in Service ");
-        ClassTutor classTutor = ClassMapper.toClassTutor(tutorId, classId, state);
-        classTutorRepository.saveAndFlush(classTutor);
+        try {
+            ClassTutor classTutor = ClassMapper.toClassTutor(tutorId, classId, state);
+            classTutorRepository.saveAndFlush(classTutor);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
@@ -53,28 +57,33 @@ public class ClassTutorServiceImpl implements ClassTutorService {
         //get Now day
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
         Date date = new Date();
-        String []nowDay = formatter.format(date).split("/");
-
-        //get list recent class
-        List<ClassTutor> classTutors = classTutorRepository.findAllByUserCtIdAndState(userId,state);
-        if (classTutors.isEmpty()){
-            return true;
-        }
 
         //set rank for each state
         int limitRank = 0;
         if (state.equals(STATE_CREATE)) limitRank = 3;
         if (state.equals(STATE_APPLY)) limitRank = 5;
 
-        if (classTutors.size()>limitRank) {
-            classTutors = classTutors.subList(classTutors.size()-limitRank,classTutors.size());
-        }
+        String []nowDay = formatter.format(date).split("/");
 
-        for (ClassTutor classTutor:classTutors) {
-            String []day = classTutor.getCreatedAt().split("/");
-            if (Integer.parseInt(day[1])==Integer.parseInt((nowDay[0])))   {
-                limitRank--;
+        try {
+            //get list recent class
+            List<ClassTutor> classTutors = classTutorRepository.findAllByUserCtIdAndState(userId,state);
+            if (classTutors.isEmpty()){
+                return true;
             }
+
+            if (classTutors.size()>limitRank) {
+                classTutors = classTutors.subList(classTutors.size()-limitRank,classTutors.size());
+            }
+
+            for (ClassTutor classTutor:classTutors) {
+                String []day = classTutor.getCreatedAt().split("/");
+                if (Integer.parseInt(day[1])==Integer.parseInt((nowDay[0])))   {
+                    limitRank--;
+                }
+            }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
 
         if (limitRank<=0) return false;
@@ -84,17 +93,26 @@ public class ClassTutorServiceImpl implements ClassTutorService {
     @Override
     public boolean updateClassroomTutor(ClassTutor classTutor) {
         log.info("Update ClassTutor in Service");
-        ClassTutor result = classTutorRepository.saveAndFlush(classTutor);
-        if(result!=null) return true;
+        try {
+            ClassTutor result = classTutorRepository.saveAndFlush(classTutor);
+            if(result!=null) return true;
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
         return false;
     }
 
     @Override
     public List<Long> getListUserID(Long classId, String state) {
-        List<ClassTutor> listClassStudent = classTutorRepository.findByClassroomCtIdAndState(classId,state);
         List<Long> listUserId = new ArrayList<>();
-        for(ClassTutor classTutor: listClassStudent){
-            listUserId.add(classTutor.getUserCtId());
+        try {
+            List<ClassTutor> listClassStudent = classTutorRepository.findByClassroomCtIdAndState(classId,state);
+
+            for(ClassTutor classTutor: listClassStudent){
+                listUserId.add(classTutor.getUserCtId());
+            }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return listUserId;
     }
@@ -127,6 +145,4 @@ public class ClassTutorServiceImpl implements ClassTutorService {
         log.info("Check exist in Service");
         return classTutorRepository.existsByClassroomCtIdAndUserCtId(classId,userId);
     }
-
-
 }

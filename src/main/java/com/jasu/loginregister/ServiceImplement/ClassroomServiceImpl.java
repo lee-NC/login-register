@@ -35,12 +35,16 @@ public class ClassroomServiceImpl implements ClassroomService {
     public ClassDto createClassroom(CreateClassroomRequest createClassroomRequest,String roleKKey, Long userCreateId) {
         log.info("Create Classroom in Service");
         Classroom classroom = ClassMapper.toClass(createClassroomRequest,roleKKey,userCreateId);
-        Date date = new Date();
         long dayToStart = checkTime(classroom.getBeginDay());
         if (Math.abs(dayToStart)>14){//begin day smaller 2 weeks
             throw new InternalServerException("Begin day is too far");
         }
-        Classroom classroomSaved = classroomRepository.saveAndFlush(classroom);
+        Classroom classroomSaved = new Classroom();
+        try{
+            classroomSaved = classroomRepository.saveAndFlush(classroom);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
         return ClassMapper.toClassDto(classroomSaved);
     }
 
@@ -48,8 +52,12 @@ public class ClassroomServiceImpl implements ClassroomService {
     @Override
     public List<ClassDto> getListClass(List<Long> classIds) {
         List<ClassDto> classDtos = new ArrayList<>();
-        for (Long id:classIds){
-            classDtos.add(ClassMapper.toClassDto(classroomRepository.getById(id)));
+        try {
+            for (Long id:classIds){
+                classDtos.add(ClassMapper.toClassDto(classroomRepository.getById(id)));
+            }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return classDtos;
     }
@@ -66,7 +74,13 @@ public class ClassroomServiceImpl implements ClassroomService {
 
     @Override
     public Classroom updateClassroom(Classroom classroom) {
-        return classroomRepository.saveAndFlush(classroom);
+        Classroom saveClass = new Classroom();
+        try {
+            saveClass = classroomRepository.saveAndFlush(classroom);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return saveClass;
     }
 
 

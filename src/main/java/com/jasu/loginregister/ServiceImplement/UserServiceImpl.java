@@ -3,6 +3,7 @@ package com.jasu.loginregister.ServiceImplement;
 import com.jasu.loginregister.Entity.Address;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.DuplicateRecordException;
+import com.jasu.loginregister.Exception.ForbiddenException;
 import com.jasu.loginregister.Exception.InternalServerException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Dto.BasicDto.UserDto;
@@ -93,7 +94,13 @@ public class UserServiceImpl implements UserService {
                 }
             }
         }
-        return userRepository.saveAndFlush(user.get());
+        User saveUser = new User();
+        try {
+            saveUser = userRepository.saveAndFlush(user.get());
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return saveUser;
     }
 
     private Address checkAddress(CreateAddressRequest req) {
@@ -124,13 +131,22 @@ public class UserServiceImpl implements UserService {
             throw new NotFoundException("No user found");
         }
         result.get().setDeleted(true);
-        User user = userRepository.saveAndFlush(result.get());
-        return "Delete user success";
+        try {
+            userRepository.saveAndFlush(result.get());
+            return "Delete user successfully";
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return "Delete user unsuccessfully";
     }
 
     @Override
     public void updateUser(User checkUser) {
-        userRepository.saveAndFlush(checkUser);
+        try {
+            userRepository.saveAndFlush(checkUser);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
@@ -139,42 +155,64 @@ public class UserServiceImpl implements UserService {
         if (userList.isEmpty()){
             return false;
         }
-        for (User user: userList){
-            user.setCoin(user.getCoin()+fee);
-            userRepository.saveAndFlush(user);
+        try {
+            for (User user: userList){
+                user.setCoin(user.getCoin()+fee);
+                userRepository.saveAndFlush(user);
+            }
+            return true;
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            return false;
         }
-        return true;
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        log.info("Find user by email in Service");
+        User result = userRepository.findByEmail(email);
+        if (result==null){
+            throw new NotFoundException("No user found");
+        }
+        return result;
     }
 
     @Override
     public User loginWithEmailAndPassword(String email, String password) {
         log.info("Login in Service");
 
-        //check email exist
-        User result = userRepository.findByEmail(email);
+        User saveUser = new User();
+        try {
+            //check email exist
+            User result = userRepository.findByEmail(email);
 
-        //compare password
-        if (result==null||!new BCryptPasswordEncoder().matches(password,result.getPassword())||result.getDeleted()){
-            throw new NotFoundException("No user found");
-        }
+            //compare password
+            if (result==null||!new BCryptPasswordEncoder().matches(password,result.getPassword())||result.getDeleted()){
+                throw new NotFoundException("No user found");
+            }
 
-        //check state
-        if (!result.getState().equals("LOGIN")){
+            //check state
+            if (result.getState().equals("LOGIN")){
+                throw new ForbiddenException("You logged in before. Do you want to log out?");
+            }
             result.setState("LOGIN");
-        }
 
-        //check active time to count num active
-        if (result.getNumActive()<=7 && checkTime(result.getLastActive())==1)    {
-            result.setNumActive(result.getNumActive()+1);
+            //check active time to count num active
+            if (result.getNumActive()<=7 && checkTime(result.getLastActive())==1)    {
+                result.setNumActive(result.getNumActive()+1);
+            }
+            else {
+                result.setNumActive(1);
+            }
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            Date date = new Date();
+            result.setLastActive(formatter.format(date));
+            result.setLastLogin(formatter.format(date));
+            return   userRepository.saveAndFlush(result);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            throw new ForbiddenException("ACCESS DENIED");
         }
-        else {
-            result.setNumActive(1);
-        }
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        Date date = new Date();
-        result.setLastActive(formatter.format(date));
-        result.setLastLogin(formatter.format(date));
-        return   userRepository.saveAndFlush(result);
     }
 
     //check time between two days
@@ -203,8 +241,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getListUser(List<Long> userIds) {
         List<User> listUser = new ArrayList<>();
-        for (Long userId: userIds){
-            listUser.add(userRepository.getById(userId));
+        try {
+            for (Long userId: userIds){
+                listUser.add(userRepository.getById(userId));
+            }
+        }catch (Exception e){
+            throw new NotFoundException("no user found");
         }
         return listUser;
     }

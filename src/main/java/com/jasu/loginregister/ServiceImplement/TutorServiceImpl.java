@@ -55,17 +55,27 @@ public class TutorServiceImpl implements TutorService {
     @Override
     public List<Tutor> getByListUserId(List<Long> userIds) {
         List<Tutor> tutors = new ArrayList<>();
-        for (Long userId: userIds){
-            Tutor tutor = tutorRepository.findByUserTutorId(userId);
-            if (tutor!=null){
-                tutors.add(tutor);
+        try {
+            for (Long userId: userIds){
+                Tutor tutor = tutorRepository.findByUserTutorId(userId);
+                if (tutor!=null){
+                    tutors.add(tutor);
+                }
             }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return tutors;
     }
 
     @Override
     public Tutor updateTutor(Tutor updateTutor) {
-        return tutorRepository.saveAndFlush(updateTutor);
+        Tutor tutor = new Tutor();
+        try {
+            tutor =  tutorRepository.saveAndFlush(updateTutor);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return tutor;
     }
 }

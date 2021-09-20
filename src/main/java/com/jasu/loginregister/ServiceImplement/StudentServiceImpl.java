@@ -52,17 +52,27 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public List<Student> getByListUserId(List<Long> userIds) {
         List<Student>students = new ArrayList<>();
-        for (Long userId: userIds){
-            Student student = studentRepository.findByUserStudentId(userId);
-            if (student!=null){
-                students.add(student);
+        try {
+            for (Long userId: userIds){
+                Student student = studentRepository.findByUserStudentId(userId);
+                if (student!=null){
+                    students.add(student);
+                }
             }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return students;
     }
 
     @Override
     public Student updateStudent(Student student) {
-        return studentRepository.saveAndFlush(student);
+        Student saveStudent = new Student();
+        try {
+            saveStudent = studentRepository.saveAndFlush(student);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return saveStudent;
     }
 }

@@ -19,10 +19,14 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public void deleteLessonById(Long id) {
-        Optional<Lesson> lesson = lessonRepository.findById(id);
-        if (lesson==null){
-            throw new NotFoundException("No lesson found");
+        try {
+            Optional<Lesson> lesson = lessonRepository.findById(id);
+            if (lesson==null){
+                throw new NotFoundException("No lesson found");
+            }
+            lessonRepository.delete(lesson.get());
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
-        lessonRepository.delete(lesson.get());
     }
 }

@@ -24,21 +24,27 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     public boolean existUserRole(Long userId, String roleKey) {
         log.info("Check user role in service");
-        boolean checkUserRole = userRoleRepository.existsByUserIdAndRoleKey(userId,roleKey);
-        return checkUserRole;
+        return userRoleRepository.existsByUserIdAndRoleKey(userId,roleKey);
     }
 
     @Override
     public void createUserRole(Long userId, String roleKey) {
         log.info("create user role in service");
-        UserRole userRole = new UserRole(userId,roleKey);
-        userRoleRepository.save(userRole);
+        try {
+            UserRole userRole = new UserRole(userId,roleKey);
+            userRoleRepository.save(userRole);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
     public Set<UserRole> getListUserRole(Long userId) {
         log.info("Get list user role in service");
         Set<UserRole> userRoles = userRoleRepository.findAllByUserId(userId);
+        if (userRoles.isEmpty()){
+            throw new ForbiddenException("ACCESS DENIED");
+        }
         return userRoles;
     }
 }

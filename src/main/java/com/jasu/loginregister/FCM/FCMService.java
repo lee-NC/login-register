@@ -39,7 +39,6 @@ public class FCMService {
         return FirebaseMessaging.getInstance().sendAsync(message).get();
     }
 
-
     private AndroidConfig getAndroidConfig(String topic) {
         return AndroidConfig.builder()
                 .setTtl(Duration.ofMinutes(2).toMillis()).setCollapseKey(topic)
@@ -70,4 +69,6 @@ public class FCMService {
                 .setApnsConfig(apnsConfig).setAndroidConfig(androidConfig).setNotification(
                         new Notification(request.getTitle(), request.getMessage()));
     }
+
+
 }

@@ -9,7 +9,7 @@ import java.time.Instant;
 @Entity(name = "jasu_refresh_token")
 public class RefreshToken extends BaseEntity{
 
-  @OneToOne(cascade = CascadeType.ALL)
+  @OneToOne()
   @JoinColumn(name = "user_rf_id", referencedColumnName = "id")
   private User user;
 
