@@ -10,7 +10,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.*;
 
 @Data
-@Entity(name = "jasu_class_student")
+@Entity
+@Table(name = "jasu_class_student")
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class ClassStudent {

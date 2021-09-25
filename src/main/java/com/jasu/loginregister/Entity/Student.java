@@ -1,20 +1,15 @@
 package com.jasu.loginregister.Entity;
 
 
-import lombok.AllArgsConstructor;
+import com.jasu.loginregister.Entity.DefinitionEntity.BaseEntity;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.List;
 
-@Entity(name = "jasu_student")
+@Entity
+@Table(name = "jasu_student")
 @Data
-public class Student extends BaseEntity{
+public class Student extends BaseEntity {
 
     @Column(nullable = false)
     private Long userStudentId;

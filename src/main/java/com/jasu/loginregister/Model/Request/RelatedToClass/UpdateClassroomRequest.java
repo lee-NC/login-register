@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Date;
 import java.util.List;
@@ -20,13 +21,6 @@ public class UpdateClassroomRequest {
             notes="UserCreateId cannot be empty"
     )
     private Long userCreateId;
-
-    @NotNull(message = "ClassId is required ")
-    @ApiModelProperty(
-            example="3",
-            notes="ClassId cannot be empty"
-    )
-    private Long classId;
 
     @ApiModelProperty(
             example="3",

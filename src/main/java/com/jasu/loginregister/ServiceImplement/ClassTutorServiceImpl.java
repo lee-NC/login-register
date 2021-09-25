@@ -1,9 +1,7 @@
 package com.jasu.loginregister.ServiceImplement;
 
 
-import com.jasu.loginregister.Entity.ClassStudent;
 import com.jasu.loginregister.Entity.ClassTutor;
-import com.jasu.loginregister.Exception.DuplicateRecordException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Mapper.ClassMapper;
 import com.jasu.loginregister.Repository.ClassTutorRepository;
@@ -18,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @Service
 @Slf4j
@@ -119,12 +117,12 @@ public class ClassTutorServiceImpl implements ClassTutorService {
 
 
     @Override
-    public boolean rejectTutorClassroomTutor(Long classId) {
+    public boolean updateListTutorClassroomTutor(Long classId,String beforeState, String afterState) {
         log.info("Update ClassTutor in Service");
-        List<ClassTutor> classTutors = classTutorRepository.findByClassroomCtIdAndState(classId,STATE_APPLY);
+        List<ClassTutor> classTutors = classTutorRepository.findByClassroomCtIdAndState(classId,beforeState);
         if (classTutors==null)    return false;
         for (ClassTutor classTutor:classTutors) {
-            classTutor.setState(STATE_REJECTED);
+            classTutor.setState(afterState);
             classTutorRepository.saveAndFlush(classTutor);
         }
         return true;

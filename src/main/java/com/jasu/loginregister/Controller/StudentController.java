@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Controller;
 
 import com.jasu.loginregister.Entity.*;
+import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Exception.ErrorResponse;
 import com.jasu.loginregister.Model.Dto.BasicDto.TutorDto;
 import com.jasu.loginregister.Model.Dto.ClassDto;
@@ -14,10 +15,12 @@ import com.jasu.loginregister.Model.ValueObject.ClassStatusVo;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -25,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @RestController
 @Slf4j
@@ -96,7 +99,8 @@ public class StudentController {
         Long classId = applyClassRequest.getClassId();
         Classroom classroom = classroomService.findById(classId);
 
-        Long fee = ((classroom.getFee()/10)/classroom.getMaxNum())/100;
+        //lay 12.5% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
+        Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
         if (checkUser.getCoin()<fee){
             return ResponseEntity.badRequest().body("There is not enough coin in the account right now");
         }
@@ -165,14 +169,17 @@ public class StudentController {
             classroom.setState(STATE_PROCESSING);
             checkClassTutor.setState(STATE_PROCESSING);
             classroom.setUserTeachId(userApprovedId);
+            classroomService.updateClassroom(classroom);
+
             ClassStudent classStudent = classStudentService.findByClassIdAndUserId(classId,userCreatedId);
             classStudent.setState(STATE_PROCESSING);
+
             if(classStudentService.updateClassroomStudent(classStudent)
                     &&classTutorService.updateClassroomTutor(checkClassTutor)
-                    &&classroomService.updateClassroom(classroom)!=null
-                    &&classTutorService.rejectTutorClassroomTutor(classId)){
+                    &&classTutorService.updateListTutorClassroomTutor(classId,STATE_APPLY,STATE_REJECTED)){
                 List<Long> tutorBeRejectedId = classTutorService.getListUserID(classId,STATE_REJECTED);
-                Long fee = ((classroom.getFee()/10)/classroom.getMaxNum())/100;
+                //lay 12.5% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
+                Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
                 List <Long> studentIds = new ArrayList<>();
                 studentIds.add(userCreatedId);
                 if (userService.refundUserBeRejected(tutorBeRejectedId,fee)
@@ -195,7 +202,7 @@ public class StudentController {
 
         ClassStudent classStudent = classStudentService.findByClassIdAndUserId(classId,userApplyId);
 
-        if (classStudent==null||!classStudent.getState().equals(STATE_APPLY)){
+        if (classStudent==null){
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_NOT_FOUND));
         }
 
@@ -203,13 +210,13 @@ public class StudentController {
 
         if (userApplyId!=Long.parseLong(classroom.getCreatedBy())
                 &&classroom.getState().equals(STATE_WAITING)
-                &&classStudent.getState().equals(STATE_APPLY)){
-            classroom.setCurrentNum(classroom.getCurrentNum()-1);
-            Classroom updateClassroom = classroomService.updateClassroom(classroom);
+                &&classStudent!=null){
+            if (classStudent.getState().equals(STATE_APPROVED)){
+                classroom.setCurrentNum(classroom.getCurrentNum()-1);
+                classroomService.updateClassroom(classroom);
+            }
             classStudent.setState(STATE_CANCELED);
-            if (classStudentService.updateClassroomStudent(classStudent)
-                &&updateClassroom!=null){
-
+            if (classStudentService.updateClassroomStudent(classStudent)){
                 return ResponseEntity.ok(ACTION_CANCEL_APPLY);
             }
         }
@@ -273,7 +280,6 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
-
     @PostMapping("/list_tutor")
     @PreAuthorize("hasAuthority('STUDENT')")
     @Secured("STUDENT")
@@ -333,6 +339,5 @@ public class StudentController {
         }
         return ResponseEntity.ok(UserMapper.toStudentDetailDto(updateStudent,user));
     }
-
 
 }

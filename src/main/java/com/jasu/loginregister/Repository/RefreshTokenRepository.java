@@ -10,11 +10,13 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long> {
-    Optional<RefreshToken> findByToken(String token);
+    RefreshToken findByToken(String token);
 
     List<RefreshToken> findAllByCreatedBy(String userId);
 
     List<RefreshToken> findAllByCreatedByAndDeleted (String userId, boolean deleted);
 
     RefreshToken findTopByCreatedByAndDeleted (String userId, boolean deleted);
+
+    List<RefreshToken> findAllByDeleted(boolean state);
 }

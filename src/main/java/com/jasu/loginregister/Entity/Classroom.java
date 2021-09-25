@@ -1,18 +1,15 @@
 package com.jasu.loginregister.Entity;
 
-import lombok.AllArgsConstructor;
+import com.jasu.loginregister.Entity.DefinitionEntity.BaseEntity;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-@Entity(name = "jasu_classroom")
+@Entity
+@Table(name = "jasu_classroom")
 @Data
-public class Classroom  extends BaseEntity{
+public class Classroom  extends BaseEntity {
 
 
     private Long userTeachId;
@@ -26,13 +23,13 @@ public class Classroom  extends BaseEntity{
     @Column(nullable = false)
     private int currentNum;
 
-    @Column(nullable = false)
+    @Column(nullable = false,updatable = false)
     private String subject;
 
-    @Column(nullable = false)
+    @Column(nullable = false,updatable = false)
     private int grade;
 
-    @Column()
+    @Column(length = 150)
     private String note;
 
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
@@ -49,7 +46,7 @@ public class Classroom  extends BaseEntity{
     @Column(nullable = false)
     private String beginDay;
 
-    @Column(nullable = false)
+    @Column(nullable = false,updatable = false)
     private String state;
 
     public Classroom() {

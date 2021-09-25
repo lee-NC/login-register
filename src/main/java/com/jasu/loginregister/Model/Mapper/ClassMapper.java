@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Model.Mapper;
 
 import com.jasu.loginregister.Entity.*;
+import com.jasu.loginregister.Model.Dto.BasicDto.TutorDto;
 import com.jasu.loginregister.Model.Dto.ClassDto;
 import com.jasu.loginregister.Model.Request.RelatedToClass.CreateClassroomRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.LessonRequest;
@@ -85,7 +86,7 @@ public class ClassMapper {
         classDto.setType(classroom.getType());
         classDto.setFee(classroom.getFee());
         classDto.setSubject(classroom.getSubject());
-        classDto.setLessonList(classroom.getLesson());
+//        classDto.setLessonList(classroom.getLesson());
 
         return classDto;
     }

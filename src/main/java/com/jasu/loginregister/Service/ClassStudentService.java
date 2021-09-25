@@ -13,11 +13,13 @@ public interface ClassStudentService {
 
     Boolean updateClassroomStudent(ClassStudent classStudent);
 
-    List<Long> getListUserID(Long classId, String state);
+    List<Long> getListUserIDByClassIdAndState(Long classId, String state);
 
-    Boolean rejectStudentInClassroom(Long classId);
+    Boolean updateListStudentInClassroom(Long classId,String beforeState, String afterState);
 
     ClassStudent findByClassIdAndUserId(Long classId, Long userApprovedId);
 
     Boolean existByClassIdAndUserId(Long classId, Long userApplyId);
+
+    List<ClassStudent> findByClassIdAndState(Long id, String stateApproved);
 }

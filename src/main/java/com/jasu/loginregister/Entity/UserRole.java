@@ -5,7 +5,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
-@Entity(name = "jasu_user_role")
+@Entity
+@Table(name = "jasu_user_role")
 @Data
 @NoArgsConstructor
 public class UserRole {

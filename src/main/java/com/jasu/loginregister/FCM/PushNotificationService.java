@@ -33,30 +33,30 @@ public class PushNotificationService {
         }
     }
 
-    public void subscribeToTopic(SubscriptionRequest subscriptionRequest) {
+    public void subscribeToTopic(SubscriptionOneRequest subscriptionOneRequest) {
         try {
-            FirebaseMessaging.getInstance(firebaseApp).subscribeToTopic(subscriptionRequest.getTokens(),
-                    subscriptionRequest.getTopicName());
+            FirebaseMessaging.getInstance(firebaseApp).subscribeToTopic(subscriptionOneRequest.getTokens(),
+                    subscriptionOneRequest.getTopicName());
         } catch (FirebaseMessagingException e) {
             log.error("Firebase subscribe to topic fail", e);
         }
     }
 
-    public void unsubscribeFromTopic(SubscriptionRequest subscriptionRequest) {
+    public void unsubscribeFromTopic(SubscriptionOneRequest subscriptionOneRequest) {
         try {
-            FirebaseMessaging.getInstance(firebaseApp).unsubscribeFromTopic(subscriptionRequest.getTokens(),
-                    subscriptionRequest.getTopicName());
+            FirebaseMessaging.getInstance(firebaseApp).unsubscribeFromTopic(subscriptionOneRequest.getTokens(),
+                    subscriptionOneRequest.getTopicName());
         } catch (FirebaseMessagingException e) {
             log.error("Firebase unsubscribe from topic fail", e);
         }
     }
 
-    public String sendPnsToDevice(NotificationRequest notificationRequest) {
+    public String sendPnsToDevice(PushOneNotificationRequest pushOneNotificationRequest) {
         Message message = Message.builder()
-                .setToken(notificationRequest.getTarget())
-                .setNotification(new Notification(notificationRequest.getTitle(), notificationRequest.getBody()))
-                .putData("content", notificationRequest.getTitle())
-                .putData("body", notificationRequest.getBody())
+                .setToken(pushOneNotificationRequest.getTarget())
+                .setNotification(new Notification(pushOneNotificationRequest.getTitle(), pushOneNotificationRequest.getBody()))
+                .putData("content", pushOneNotificationRequest.getTitle())
+                .putData("body", pushOneNotificationRequest.getBody())
                 .build();
 
         String response = null;
@@ -69,12 +69,12 @@ public class PushNotificationService {
         return response;
     }
 
-    public String sendPnsToTopic(NotificationRequest notificationRequest) {
+    public String sendPnsToTopic(PushOneNotificationRequest pushOneNotificationRequest) {
         Message message = Message.builder()
-                .setTopic(notificationRequest.getTarget())
-                .setNotification(new Notification(notificationRequest.getTitle(), notificationRequest.getBody()))
-                .putData("content", notificationRequest.getTitle())
-                .putData("body", notificationRequest.getBody())
+                .setTopic(pushOneNotificationRequest.getTarget())
+                .setNotification(new Notification(pushOneNotificationRequest.getTitle(), pushOneNotificationRequest.getBody()))
+                .putData("content", pushOneNotificationRequest.getTitle())
+                .putData("body", pushOneNotificationRequest.getBody())
                 .build();
 
         String response = null;

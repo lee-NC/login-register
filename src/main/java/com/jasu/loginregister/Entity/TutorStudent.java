@@ -7,7 +7,8 @@ import javax.persistence.*;
 import java.util.List;
 
 @Data
-@Entity(name = "jasu_tutor_student")
+@Entity
+@Table(name = "jasu_tutor_student")
 @NoArgsConstructor
 public class TutorStudent {
 

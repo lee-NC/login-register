@@ -11,6 +11,8 @@ import java.util.Date;
 @NoArgsConstructor
 public class UserDetailDto {
 
+    private Long id;
+
     private String fullName;
 
     private String gender;

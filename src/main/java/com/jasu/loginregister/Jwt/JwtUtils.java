@@ -1,17 +1,15 @@
 package com.jasu.loginregister.Jwt;
 
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
-import com.jasu.loginregister.Jwt.Principal.UserPrincipalServiceImpl;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.ACCESS_EXP_DATE;
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.SECRET;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.ACCESS_EXP_DATE;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.SECRET;
 
 @Component
 public class JwtUtils {

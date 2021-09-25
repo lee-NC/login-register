@@ -2,6 +2,8 @@ package com.jasu.loginregister.Controller;
 
 
 import com.jasu.loginregister.Entity.*;
+import com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage;
+import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Exception.ErrorResponse;
 import com.jasu.loginregister.Jwt.JwtResponse;
 import com.jasu.loginregister.Jwt.JwtUtils;
@@ -82,7 +84,7 @@ public class RegistryCotroller {
             userRoleService.createUserRole(checkUser.getId(), DeRole.TUTOR.getAuthority());
             return ResponseEntity.ok(tutorDto);
         }
-        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,DefineEntityStateMessage.ACTION_UNSUCCESSFULLY));
+        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST, DEStateMessage.ACTION_UNSUCCESSFULLY));
     }
 
     @PostMapping("/student")
@@ -99,6 +101,6 @@ public class RegistryCotroller {
             userRoleService.createUserRole(checkUser.getId(), DeRole.STUDENT.getAuthority());
             return ResponseEntity.ok(studentDto);
         }
-        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,DefineEntityStateMessage.ACTION_UNSUCCESSFULLY));
+        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST, DEStateMessage.ACTION_UNSUCCESSFULLY));
     }
 }

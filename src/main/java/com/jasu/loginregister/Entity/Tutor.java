@@ -1,12 +1,14 @@
 package com.jasu.loginregister.Entity;
 
 
+import com.jasu.loginregister.Entity.DefinitionEntity.BaseEntity;
 import lombok.Data;
 
 import javax.persistence.*;
 import java.util.List;
 
-@Entity(name = "jasu_tutor")
+@Entity
+@Table(name = "jasu_tutor")
 @Data
 
 public class Tutor extends BaseEntity {

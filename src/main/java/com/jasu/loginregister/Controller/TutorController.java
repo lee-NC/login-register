@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Controller;
 
 import com.jasu.loginregister.Entity.*;
+import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Exception.ErrorResponse;
 import com.jasu.loginregister.Model.Dto.BasicDto.StudentDto;
 import com.jasu.loginregister.Model.Dto.ClassDto;
@@ -17,18 +18,21 @@ import com.jasu.loginregister.Model.ValueObject.ClassStatusVo;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @RestController
 @Slf4j
@@ -82,7 +86,6 @@ public class TutorController {
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
     }
 
-
     @PostMapping("/apply")
     @PreAuthorize("hasAuthority('TUTOR')")
     @Secured("STUDENT")
@@ -94,6 +97,7 @@ public class TutorController {
         Long classId = applyClassRequest.getClassId();
         Classroom classroom = classroomService.findById(classId);
 
+        //lay 20% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
         Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
         if (checkUser.getCoin()<fee){
             return ResponseEntity.badRequest().body("There is not enough coin in the account right now");
@@ -140,9 +144,9 @@ public class TutorController {
         Long userApprovedId = approveClassRequest.getUserApprovedId();
         Long classId = approveClassRequest.getClassId();
 
-        ClassStudent classStudent = classStudentService.findByClassIdAndUserId(classId,userApprovedId);
+        ClassStudent checkClassStudent = classStudentService.findByClassIdAndUserId(classId,userApprovedId);
 
-        if (classStudent==null||!classStudent.getState().equals(STATE_APPLY)){
+        if (checkClassStudent==null||!checkClassStudent.getState().equals(STATE_APPLY)){
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_NOT_FOUND));
         }
 
@@ -153,32 +157,36 @@ public class TutorController {
                 &&!userCreatedId.equals(userApprovedId)
 //                &&classroom.getCreatedBy().equals(userCreatedId.toString()) //dieu kien co the bo
                 &&checkRole
-                &&classStudent.getState().equals(STATE_APPLY)
+                &&checkClassStudent.getState().equals(STATE_APPLY)
                 &&classroom.getState().equals(STATE_WAITING)){
 
             classroom.setCurrentNum(classroom.getCurrentNum()+1);
+            classroomService.updateClassroom(classroom);
 
             if (classroom.getCurrentNum()<classroom.getMaxNum()){
-                classStudent.setState(STATE_APPROVED);
-                if(classroomService.updateClassroom(classroom)!=null
-                        &&classStudentService.updateClassroomStudent(classStudent)){
+                checkClassStudent.setState(STATE_APPROVED);
+                if(classStudentService.updateClassroomStudent(checkClassStudent)){
                     return ResponseEntity.ok("You approved a student in this class. Classroom will start in begin day");
                 }
             }
 
             if (classroom.getCurrentNum()==classroom.getMaxNum()){
+
                 classroom.setState(STATE_PROCESSING);
-                classStudent.setState(STATE_PROCESSING);
+                classroomService.updateClassroom(classroom);
+
+                checkClassStudent.setState(STATE_PROCESSING);
                 ClassTutor classTutor = classTutorService.findByClassIdAndUserId(classId,userCreatedId);
                 classTutor.setState(STATE_PROCESSING);
 
-                if(classroomService.updateClassroom(classroom)!=null
-                        &&classTutorService.updateClassroomTutor(classTutor)
-                        &&classStudentService.updateClassroomStudent(classStudent)
-                        &&classStudentService.rejectStudentInClassroom(classId)){
+                if(classTutorService.updateClassroomTutor(classTutor)
+                        &&classStudentService.updateClassroomStudent(checkClassStudent)
+                        &&classStudentService.updateListStudentInClassroom(classId,STATE_APPLY,STATE_REJECTED)
+                        &&classStudentService.updateListStudentInClassroom(classId,STATE_APPROVED,STATE_PROCESSING)){
+                    //lay 20% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
                     Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
-                    List <Long> studentIds = classStudentService.getListUserID(classId,STATE_APPROVED);
-                    List<Long> studentBeRejectedId = classStudentService.getListUserID(classId,STATE_REJECTED);
+                    List <Long> studentIds = classStudentService.getListUserIDByClassIdAndState(classId,STATE_PROCESSING);
+                    List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classId,STATE_REJECTED);
                     if (tutorStudentSerivce.createListStudentService(classId,userCreatedId,studentIds)
                         &&userService.refundUserBeRejected(studentBeRejectedId,fee)) {
 
@@ -251,8 +259,8 @@ public class TutorController {
     }
 
     @PostMapping("/list_class")
-    @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @PreAuthorize("hasAuthority('USER')")
+    @Secured("USER")
     public ResponseEntity<?> getClassApplyByUserId(@RequestBody ListClassRequest listClassRequest) {
         log.info("get list class tutor in Controller");
         Long userId = listClassRequest.getUserId();
@@ -274,7 +282,7 @@ public class TutorController {
 
     @PostMapping("/list_student")
     @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @Secured("TUTOR")
     public ResponseEntity<?> getStudentInAClassByClassId(@RequestBody ListUserRequest listUserRequest) {
         log.info("get list class tutor sign up in Controller");
 
@@ -287,10 +295,10 @@ public class TutorController {
             List<Long> userIds = new ArrayList<>();
 
             if (state.equals(STATE_WAITING)){
-                userIds = classStudentService.getListUserID(classId, listUserRequest.getState().toUpperCase(Locale.ROOT));
+                userIds = classStudentService.getListUserIDByClassIdAndState(classId, listUserRequest.getState().toUpperCase(Locale.ROOT));
             }
             else {
-                userIds = classStudentService.getListUserID(classId,state);
+                userIds = classStudentService.getListUserIDByClassIdAndState(classId,state);
             }
 
             List<User> users = userService.getListUser(userIds);
@@ -309,8 +317,8 @@ public class TutorController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @PreAuthorize("hasAuthority('USER')")
+    @Secured("USER")
     public ResponseEntity<?> getTutorById(@PathVariable("id") Long userId) {
         log.info("get tutor by Id in Controller");
         Tutor tutor = tutorService.findByUserId(userId);
@@ -408,7 +416,5 @@ public class TutorController {
         }
         return schoolList;
     }
-
-
 
 }

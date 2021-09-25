@@ -8,7 +8,8 @@ import javax.persistence.*;
 
 import static org.apache.coyote.http11.Constants.a;
 
-@Entity(name = "jasu_tutor_achievement")
+@Entity
+@Table(name = "jasu_tutor_achievement")
 @Data
 @NoArgsConstructor
 public class Achievement {

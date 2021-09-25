@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +26,8 @@ public class TutorServiceImpl implements TutorService {
     @Autowired
     private TutorRepository tutorRepository;
 
+    @Autowired
+    private EntityManager entityManager;
 
     @Override
     public Tutor createTutor(CreateTutorRequest createTutorRequest) {
@@ -52,6 +57,7 @@ public class TutorServiceImpl implements TutorService {
         return checkTutor;
     }
 
+
     @Override
     public List<Tutor> getByListUserId(List<Long> userIds) {
         List<Tutor> tutors = new ArrayList<>();
@@ -78,4 +84,10 @@ public class TutorServiceImpl implements TutorService {
         }
         return tutor;
     }
+
+    @Override
+    public List<Tutor> search(String keyWord) {
+        return null;
+    }
+
 }

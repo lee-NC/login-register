@@ -1,6 +1,6 @@
-package com.jasu.loginregister.Entity;
+package com.jasu.loginregister.Entity.DefinitionEntity;
 
-public class DefineEntityStateMessage {
+public class DEStateMessage {
 
     //state
     public static final String STATE_CREATE = "CREATE";
@@ -28,9 +28,10 @@ public class DefineEntityStateMessage {
 //    DONE: class is done
 
     //define number
-    public static final int YEAR_ACHIEVEMENT = 1970;//thoi gian nam bat dau
-    public static final long REFRESH_EXP_DATE = 86400000l;//là thời gian một ngày tính theo giây
-    public static final long ACCESS_EXP_DATE = 3600000l;//là thời gian một giờ tính theo giây
+    public static final int YEAR_ACHIEVEMENT = 1970;//thoi gian nam bat dau, gioi han
+    public static final long TIME_PER_DAY = 86400000l; //là thời gian một ngày tính theo giây
+    public static final long REFRESH_EXP_DATE = 259200000l;//là thời gian 3*một ngày tính theo giây
+    public static final long ACCESS_EXP_DATE = 10800000l;//là thời gian 3 * một giờ tính theo giây
 
 
     //Define String

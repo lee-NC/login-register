@@ -1,5 +1,6 @@
 package com.jasu.loginregister.Entity;
 
+import com.jasu.loginregister.Entity.DefinitionEntity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -7,7 +8,8 @@ import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity(name = "jasu_user")
+@Entity
+@Table(name = "jasu_user")
 @Data
 @NoArgsConstructor
 public class User extends BaseEntity {

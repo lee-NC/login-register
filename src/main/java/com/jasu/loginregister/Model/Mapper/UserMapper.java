@@ -29,6 +29,7 @@ public class UserMapper {
         tmp.setId(user.getId());
         tmp.setFullName(user.getFullName());
         tmp.setAvatar(user.getAvatar());
+        tmp.setGender(user.getGender());
         return tmp;
     }
 
@@ -146,6 +147,7 @@ public class UserMapper {
 
     public static UserDetailDto toUserDetailDto(User user) {
         UserDetailDto userDetailDto = new UserDetailDto();
+        userDetailDto.setId(user.getId());
         userDetailDto.setFullName(user.getFullName());
         userDetailDto.setAddressDto(toAddressDto(user.getAddress()));
         userDetailDto.setBirthday(user.getBirthday());

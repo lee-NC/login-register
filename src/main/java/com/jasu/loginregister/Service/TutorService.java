@@ -13,4 +13,6 @@ public interface TutorService {
     List<Tutor> getByListUserId(List<Long> userIds);
 
     Tutor updateTutor(Tutor updateTutor);
+
+    List<Tutor> search(String keyWord);
 }

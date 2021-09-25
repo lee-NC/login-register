@@ -9,7 +9,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.*;
 
 @Data
-@Entity(name = "jasu_class_tutor")
+@Entity
+@Table(name = "jasu_class_tutor")
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class ClassTutor {

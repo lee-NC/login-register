@@ -6,12 +6,12 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Pattern;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 public class UpdateTutorRequest {
-
 
     @ApiModelProperty(
             example="Philosopher",

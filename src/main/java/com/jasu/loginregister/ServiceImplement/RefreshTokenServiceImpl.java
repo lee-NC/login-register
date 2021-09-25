@@ -3,20 +3,19 @@ package com.jasu.loginregister.ServiceImplement;
 import com.jasu.loginregister.Entity.RefreshToken;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.ForbiddenException;
+import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Repository.RefreshTokenRepository;
 import com.jasu.loginregister.Repository.UserRepository;
 import com.jasu.loginregister.Service.RefreshTokenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.REFRESH_EXP_DATE;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.REFRESH_EXP_DATE;
 
 
 @Service
@@ -30,12 +29,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Autowired
   private UserRepository userRepository;
 
-  public Optional<RefreshToken> findByToken(String token) {
-    try {
-      return refreshTokenRepository.findByToken(token);
-    }catch (Exception e){
-      throw new ForbiddenException("No token found");
+  public RefreshToken findByToken(String token) {
+    RefreshToken refreshToken = refreshTokenRepository.findByToken(token);
+    if (refreshToken==null){
+      throw new NotFoundException("Token unavailable");
     }
+    return refreshToken;
   }
 
   public RefreshToken createRefreshToken(Long userId) {
@@ -56,12 +55,16 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     return refreshToken;
   }
 
-  public RefreshToken verifyExpiration(RefreshToken token) {
+  public boolean verifyExpiration(RefreshToken token) {
     if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
-      refreshTokenRepository.delete(token);
-      throw new ForbiddenException("Refresh token was expired. Please make a new login request");
+      token.setDeleted(true);
+      refreshTokenRepository.saveAndFlush(token);
+      User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
+      user.setState("LOGOUT");
+      userRepository.saveAndFlush(user);
+      return false;
     }
-    return token;
+    return true;
   }
 
   @Override
@@ -74,20 +77,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     try {
       refreshToken.setDeleted(true);
       refreshTokenRepository.saveAndFlush(refreshToken);
-    }catch (Exception e){
-      System.out.println(e.getMessage());
-    }
-  }
-
-  @Override
-  public void deleteAllOldToken(Long userId) {
-    log.info("Delete all old token");
-    try {
-      List<RefreshToken> tokens = refreshTokenRepository.findAllByCreatedByAndDeleted(userId.toString(),false);
-      for (RefreshToken token: tokens){
-        token.setDeleted(true);
-        refreshTokenRepository.saveAndFlush(token);
-      }
+      User user = userRepository.getById(Long.parseLong(refreshToken.getCreatedBy()));
+      user.setState("LOGOUT");
+      userRepository.saveAndFlush(user);
     }catch (Exception e){
       System.out.println(e.getMessage());
     }
@@ -119,5 +111,28 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
     if (limitRank <= 0) return false;
     return true;
+  }
+
+  @Override
+  public void updateByDelete() {
+    log.info("Check refresh token up to date ");
+    try {
+      Date date = new Date();
+      List<RefreshToken> tokens = refreshTokenRepository.findAllByDeleted(false);
+      if (tokens.isEmpty()){
+        return;
+      }
+      for (RefreshToken token: tokens){
+        if (token.getExpiryDate().isBefore(date.toInstant())){
+          token.setDeleted(true);
+          refreshTokenRepository.saveAndFlush(token);
+          User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
+          user.setState("LOGOUT");
+          userRepository.saveAndFlush(user);
+        }
+      }
+    }catch (Exception e){
+      System.out.println(e.getMessage());
+    }
   }
 }

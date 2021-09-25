@@ -1,15 +1,16 @@
 package com.jasu.loginregister.Entity;
 
-import lombok.AllArgsConstructor;
+import com.jasu.loginregister.Entity.DefinitionEntity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
-@Entity(name = "jasu_user_bank_account")
+@Entity
+@Table(name = "jasu_user_bank_account")
 @Data
 @NoArgsConstructor
-public class UserBankAccount extends BaseEntity{
+public class UserBankAccount extends BaseEntity {
 
     @Column(nullable = false)
     private Long accountId;

@@ -2,13 +2,15 @@ package com.jasu.loginregister.Service;
 
 import com.jasu.loginregister.Entity.RefreshToken;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RefreshTokenService {
-    Optional<RefreshToken> findByToken(String token);
+    RefreshToken findByToken(String token);
     RefreshToken createRefreshToken(Long userId);
-    RefreshToken verifyExpiration(RefreshToken token);
+    boolean verifyExpiration(RefreshToken token);
     void deleteByUserId(Long userId);
-    void deleteAllOldToken(Long userId);
     boolean checkTimeLogin(String toString);
+
+    void updateByDelete();
 }

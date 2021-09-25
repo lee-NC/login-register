@@ -1,8 +1,6 @@
 package com.jasu.loginregister.ServiceImplement;
 
 import com.jasu.loginregister.Entity.ClassStudent;
-import com.jasu.loginregister.Entity.ClassTutor;
-import com.jasu.loginregister.Exception.DuplicateRecordException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Mapper.ClassMapper;
 import com.jasu.loginregister.Repository.ClassStudentRepository;
@@ -17,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static com.jasu.loginregister.Entity.DefineEntityStateMessage.*;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @Service
 @Slf4j
@@ -100,7 +98,7 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     }
 
     @Override
-    public List<Long> getListUserID(Long classId, String state) {
+    public List<Long> getListUserIDByClassIdAndState(Long classId, String state) {
         log.info("get List UserID in Service");
         List<Long> listUserId = new ArrayList<>();
         try {
@@ -116,12 +114,12 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     }
 
     @Override
-    public Boolean rejectStudentInClassroom(Long classId) {
+    public Boolean updateListStudentInClassroom(Long classId,String beforeState, String afterState) {
         log.info("Update ClassStudent in Service");
         try {
-            List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(classId,STATE_APPLY);
+            List<ClassStudent> classStudents = classStudentRepository.findAllByUserCsIdAndState(classId,beforeState);
             for (ClassStudent classStudent:classStudents) {
-                classStudent.setState(STATE_REJECTED);
+                classStudent.setState(afterState);
                 classStudentRepository.saveAndFlush(classStudent);
             }
             return true;
@@ -145,6 +143,16 @@ public class ClassStudentServiceImpl implements ClassStudentService {
     public Boolean existByClassIdAndUserId(Long classId, Long userId) {
         log.info("Check exist in Service");
         return classStudentRepository.existsByClassroomCsIdAndUserCsId(classId,userId);
+    }
+
+    @Override
+    public List<ClassStudent> findByClassIdAndState(Long id, String state) {
+        log.info("Get ClassStudent in Service");
+        List<ClassStudent> classStudents = classStudentRepository.findAllByClassroomCsIdAndState(id,state);
+        if (classStudents.isEmpty()){
+            throw new NotFoundException("No class student found");
+        }
+        return classStudents;
     }
 
 

@@ -1,4 +1,4 @@
-package com.jasu.loginregister.Entity;
+package com.jasu.loginregister.Entity.DefinitionEntity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

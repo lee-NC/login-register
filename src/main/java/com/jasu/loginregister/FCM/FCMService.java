@@ -1,9 +1,12 @@
 package com.jasu.loginregister.FCM;
 
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,5 +73,19 @@ public class FCMService {
                         new Notification(request.getTitle(), request.getMessage()));
     }
 
+    public void sendMessage(PushNotificationRequest pushNotificationRequest, String token) throws Exception {
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+        Date  date = new Date();
+        Message message = Message.builder()
+                .putData("Title: ",pushNotificationRequest.getTitle())
+                .putData("Message: ", pushNotificationRequest.getMessage())
+                .putData("Topic: ", pushNotificationRequest.getTopic())
+                .putData("Token: ", pushNotificationRequest.getToken())
+                .putData("Time: ", formatter.format(date))
+                .setToken(token)
+                .build();
+        String response = FirebaseMessaging.getInstance().send(message);
+        logger.info("Successfully sent message to : {}",response);
+    }
 
 }

@@ -3,7 +3,7 @@ package com.jasu.loginregister.FCM;
 import lombok.Data;
 
 @Data
-public class NotificationRequest {
+public class PushOneNotificationRequest {
 
     private String target;
     private String title;

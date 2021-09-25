@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class SubscriptionRequest {
+public class SubscriptionOneRequest {
 
     String topicName;
     List<String> tokens;

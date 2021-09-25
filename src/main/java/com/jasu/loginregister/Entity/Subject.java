@@ -5,7 +5,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
-@Entity(name = "jasu_subject")
+@Entity
+@Table(name = "jasu_subject")
 @Data
 @NoArgsConstructor
 public class Subject {

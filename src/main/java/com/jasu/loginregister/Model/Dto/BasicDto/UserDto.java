@@ -13,4 +13,6 @@ public class UserDto {
 
     private String avatar;
 
+    private String gender;
+
 }

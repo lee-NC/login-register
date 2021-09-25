@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Model.Dto;
 
 import com.jasu.loginregister.Entity.Lesson;
+import com.jasu.loginregister.Model.Dto.BasicDto.TutorDto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -28,7 +29,5 @@ public class ClassDto {
     private String beginDay;
 
     private String subject;
-
-    private List<Lesson> lessonList;
 
 }
