@@ -6,10 +6,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.google.firebase.messaging.AndroidConfig;
@@ -26,7 +23,6 @@ import com.google.gson.GsonBuilder;
 @Slf4j
 @Service
 public class FCMService {
-    private Logger logger = LoggerFactory.getLogger(FCMService.class);
 
 
     public void sendMessageToToken(PushNotificationRequest request)
@@ -35,7 +31,7 @@ public class FCMService {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonOutput = gson.toJson(message);
         String response = sendAndGetResponse(message);
-        logger.info("Sent message to token. Device token: " + request.getToken() + ", " + response+ " msg "+jsonOutput);
+        log.info("Sent message to token. Device token: " + request.getToken() + ", " + response+ " msg "+jsonOutput);
     }
 
     private String sendAndGetResponse(Message message) throws InterruptedException, ExecutionException {
@@ -85,7 +81,7 @@ public class FCMService {
                 .setToken(token)
                 .build();
         String response = FirebaseMessaging.getInstance().send(message);
-        logger.info("Successfully sent message to : {}",response);
+        log.info("Successfully sent message to : {}",response);
     }
 
 }

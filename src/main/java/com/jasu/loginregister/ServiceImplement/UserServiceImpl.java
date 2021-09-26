@@ -1,5 +1,6 @@
 package com.jasu.loginregister.ServiceImplement;
 
+import com.jasu.loginregister.Email.EmailService;
 import com.jasu.loginregister.Entity.Address;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.DuplicateRecordException;
@@ -29,6 +30,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.USER_REJECTED_CONTENT;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.USER_REJECTED_SUBJECT;
+
 @Service
 @Slf4j
 @Transactional
@@ -36,6 +40,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     private static String UPLOAD_DIR = System.getProperty("user.home") + "/upload";
 
@@ -158,6 +165,7 @@ public class UserServiceImpl implements UserService {
         try {
             for (User user: userList){
                 user.setCoin(user.getCoin()+fee);
+                emailService.sendAnEmail(user.getEmail(),USER_REJECTED_CONTENT,USER_REJECTED_SUBJECT);
                 userRepository.saveAndFlush(user);
             }
             return true;

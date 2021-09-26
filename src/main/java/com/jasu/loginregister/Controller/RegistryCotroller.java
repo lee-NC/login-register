@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Controller;
 
 
+import com.jasu.loginregister.Email.EmailService;
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage;
 import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @RestController
 @Slf4j
@@ -49,6 +52,9 @@ public class RegistryCotroller {
     @Autowired
     private UserRoleService userRoleService;
 
+    @Autowired
+    private EmailService emailService;
+
 
     @PostMapping("")
     public ResponseEntity<?> registryUser(@Valid @RequestBody CreateUserRequest createUserRequest){
@@ -64,6 +70,7 @@ public class RegistryCotroller {
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
         String jwt = jwtUtils.generateJwtToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+        emailService.sendAnEmail(checkUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
 
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
                 checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
@@ -82,8 +89,15 @@ public class RegistryCotroller {
             Tutor tutor = tutorService.createTutor(createTutorRequest);
             TutorDto tutorDto = UserMapper.toTutorDto(tutor,checkUser);
             userRoleService.createUserRole(checkUser.getId(), DeRole.TUTOR.getAuthority());
+            if (userRoleService.existUserRole(createTutorRequest.getUserId(),DeRole.STUDENT.getAuthority())){
+                emailService.sendAnEmail(checkUser.getEmail(),TUTOR_CONTENT,TUTOR_SUBJECT);
+            }
+            else {
+                emailService.sendAnEmail(checkUser.getEmail(),WELCOME_CONTENT,WELCOME_SUBJECT);
+            }
             return ResponseEntity.ok(tutorDto);
         }
+
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST, DEStateMessage.ACTION_UNSUCCESSFULLY));
     }
 
@@ -99,8 +113,15 @@ public class RegistryCotroller {
             Student student = studentService.createStudent(createStudentRequest);
             StudentDto studentDto = UserMapper.toStudentDto(student,checkUser);
             userRoleService.createUserRole(checkUser.getId(), DeRole.STUDENT.getAuthority());
+            if (userRoleService.existUserRole(createStudentRequest.getUserId(),DeRole.TUTOR.getAuthority())){
+                emailService.sendAnEmail(checkUser.getEmail(),STUDENT_CONTENT,STUDENT_SUBJECT);
+            }
+            else {
+                emailService.sendAnEmail(checkUser.getEmail(),WELCOME_CONTENT,WELCOME_SUBJECT);
+            }
             return ResponseEntity.ok(studentDto);
         }
+
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST, DEStateMessage.ACTION_UNSUCCESSFULLY));
     }
 }

@@ -1,5 +1,6 @@
 package com.jasu.loginregister.Controller;
 
+import com.jasu.loginregister.Email.EmailService;
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Exception.ErrorResponse;
@@ -33,6 +34,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.APPROVE_STUDENT_SUBJECT;
 
 @RestController
 @Slf4j
@@ -66,6 +68,9 @@ public class TutorController {
     @Autowired
     private TutorStudentSerivce tutorStudentSerivce;
 
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/create_class")
     @PreAuthorize("hasAuthority('TUTOR')")
     @Secured("STUDENT")
@@ -79,8 +84,10 @@ public class TutorController {
         Subject checkSubject = subjectService.checkBySubjectName(createClassroomRequest.getSubject());
 
         if (checkTimes && checkSubject!=null){
+            User checkUser = userService.findByID(userCreatedId);
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.TUTOR.getAuthority(), userCreatedId);
             classTutorService.createClassroomTutor(userCreatedId,classDto.getId(),STATE_CREATE);
+            emailService.sendAnEmail(checkUser.getEmail(),CREATE_CLASS_CONTENT,CREATE_CLASS_SUBJECT);
             return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreatedId));
         }
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
@@ -103,6 +110,7 @@ public class TutorController {
             return ResponseEntity.badRequest().body("There is not enough coin in the account right now");
         }
 
+        User checkStudent = userService.findByID(Long.parseLong(classroom.getCreatedBy()));
         Boolean checkTimes = classTutorService.checkRecentClassTutor(userApplyId,STATE_APPLY);
         if (classroom.getUserTeachId()==null
                 &&classroom.getState().equals(STATE_WAITING)
@@ -113,6 +121,8 @@ public class TutorController {
                 classTutorService.createClassroomTutor(userApplyId,classId,STATE_APPLY);
                 checkUser.setCoin(checkUser.getCoin()-fee);
                 userService.updateUser(checkUser);
+                emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                emailService.sendAnEmail(checkStudent.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                 return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
             }
             else {
@@ -126,6 +136,8 @@ public class TutorController {
                     if (updateClassTutor){
                         checkUser.setCoin(checkUser.getCoin()-fee);
                         userService.updateUser(checkUser);
+                        emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                        emailService.sendAnEmail(checkStudent.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                         return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
                     }
                 }
@@ -163,9 +175,15 @@ public class TutorController {
             classroom.setCurrentNum(classroom.getCurrentNum()+1);
             classroomService.updateClassroom(classroom);
 
+            User userCreate = userService.findByID(userCreatedId);
+
+
             if (classroom.getCurrentNum()<classroom.getMaxNum()){
                 checkClassStudent.setState(STATE_APPROVED);
                 if(classStudentService.updateClassroomStudent(checkClassStudent)){
+                    User userApply = userService.findByID(userApprovedId);
+                    emailService.sendAnEmail(userCreate.getEmail(),APPROVE_STUDENT_CONTENT,APPROVE_STUDENT_SUBJECT);
+                    emailService.sendAnEmail(userApply.getEmail(),USER_APPROVED_CONTENT,USER_APPROVED_SUBJECT);
                     return ResponseEntity.ok("You approved a student in this class. Classroom will start in begin day");
                 }
             }
@@ -189,6 +207,7 @@ public class TutorController {
                     List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classId,STATE_REJECTED);
                     if (tutorStudentSerivce.createListStudentService(classId,userCreatedId,studentIds)
                         &&userService.refundUserBeRejected(studentBeRejectedId,fee)) {
+                        emailService.sendAnEmail(userCreate.getEmail(),APPROVE_STUDENT_CONTENT,APPROVE_STUDENT_SUBJECT);
 
                         return ResponseEntity.ok("Class is starting, check your class");
                     }
@@ -204,9 +223,9 @@ public class TutorController {
     public ResponseEntity<?> tutorCancelApplyClass(@Valid @RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor cancel sign up class in Controller");
 
-        Long userApplyId = applyClassRequest.getUserId();
+        Long tutorCancelApplyId = applyClassRequest.getUserId();
         Long classId = applyClassRequest.getClassId();
-        ClassTutor checkClassTutor = classTutorService.findByClassIdAndUserId(classId,userApplyId);
+        ClassTutor checkClassTutor = classTutorService.findByClassIdAndUserId(classId,tutorCancelApplyId);
 
         if (checkClassTutor==null||checkClassTutor.getState().equals(STATE_CANCELED)){
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_NOT_FOUND));
@@ -217,9 +236,14 @@ public class TutorController {
         if (classroom.getUserTeachId()==null
                 &&checkClassTutor.getState().equals(STATE_APPLY)
                 &&classroom.getState().equals(STATE_WAITING)
-                &&userApplyId!=Long.parseLong(classroom.getCreatedBy())){
+                &&tutorCancelApplyId!=Long.parseLong(classroom.getCreatedBy())){
+            Long fee = ((classroom.getFee()/10)*classroom.getMaxNum())/100;
+            User tutorCancelApplication = userService.findByID(tutorCancelApplyId);
+            tutorCancelApplication.setCoin(tutorCancelApplication.getCoin()+fee);
+            userService.updateUser(tutorCancelApplication);
             checkClassTutor.setState(STATE_CANCELED);
             if (classTutorService.updateClassroomTutor(checkClassTutor)){
+                emailService.sendAnEmail(tutorCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
                 return ResponseEntity.ok(ACTION_CANCEL_APPLY);
             }
         }

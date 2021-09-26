@@ -66,17 +66,20 @@ public class ScheduledFixed{
             long dayToStart = checkTime(classroom.getBeginDay());
             if (dayToStart<=0){//den ngay hoan thanh
                 if (classroom.getUserTeachId()!=null){
+
+
+                    Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
+                    ClassTutor classTutor = classTutorService.findByClassIdAndUserId(classroom.getId(),Long.parseLong(classroom.getCreatedBy()));
+
                     if (classroom.getCurrentNum()>0){
+                        classTutor.setState(STATE_PROCESSING);
 
                         classroom.setState(STATE_PROCESSING);
                         classroomRepository.saveAndFlush(classroom);
-
-                        ClassTutor classTutor = classTutorService.findByClassIdAndUserId(classroom.getId(),Long.parseLong(classroom.getCreatedBy()));
-                        classTutor.setState(STATE_PROCESSING);
                         if (classTutorService.updateClassroomTutor(classTutor)
                                 &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_APPLY, STATE_REJECTED)
                                 &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_APPROVED,STATE_PROCESSING)){
-                            Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
+
                             List <Long> studentIds = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_PROCESSING);
                             List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_REJECTED);
                             if (tutorStudentSerivce.createListStudentService(classroom.getId(),Long.parseLong(classroom.getCreatedBy()),studentIds)
@@ -89,14 +92,11 @@ public class ScheduledFixed{
                         classroom.setState(STATE_CANCELED);
                         classroomRepository.saveAndFlush(classroom);
 
-                        ClassTutor classTutor = classTutorService.findByClassIdAndUserId(classroom.getId(),Long.parseLong(classroom.getCreatedBy()));
                         classTutor.setState(STATE_CANCELED);
-
                         if (classTutorService.updateClassroomTutor(classTutor)
-                                &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_APPLY, STATE_CANCELED)
-                                &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_APPROVED,STATE_CANCELED)){
-                            Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
-                            List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_CANCELED);
+                                &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_APPLY, STATE_REJECTED)
+                                &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_APPROVED,STATE_REJECTED)){
+                            List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_REJECTED);
                             if (userService.refundUserBeRejected(studentBeRejectedId,fee)) {
                                 continue;
                             }
@@ -111,10 +111,10 @@ public class ScheduledFixed{
                     classStudent.setState(STATE_CANCELED);
 
                     if (classStudentService.updateClassroomStudent(classStudent)
-                            &&classTutorService.updateListTutorClassroomTutor(classroom.getId(),STATE_APPLY, STATE_CANCELED)){
+                            &&classTutorService.updateListTutorClassroomTutor(classroom.getId(),STATE_APPLY, STATE_REJECTED)){
                         //lay 12.5% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
                         Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
-                        List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_CANCELED);
+                        List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_REJECTED);
                         if (userService.refundUserBeRejected(studentBeRejectedId,fee)) {
                             continue;
                         }

@@ -1,5 +1,6 @@
 package com.jasu.loginregister.Controller;
 
+import com.jasu.loginregister.Email.EmailService;
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Exception.ErrorResponse;
@@ -62,6 +63,9 @@ public class StudentController {
     @Autowired
     private TutorStudentSerivce tutorStudentSerivce;
 
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/create_class")
     @PreAuthorize("hasAuthority('STUDENT')")
     @Secured("STUDENT")
@@ -78,8 +82,10 @@ public class StudentController {
 
         if (checkTimes && checkSubject!=null
                 && student.getGrade() == createClassroomRequest.getGrade()){
+            User checkUser = userService.findByID(userCreateId);
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.STUDENT.getAuthority(), userCreateId);
             classStudentService.createClassroomStudent(userCreateId,classDto.getId(),STATE_CREATE);
+            emailService.sendAnEmail(checkUser.getEmail(),CREATE_CLASS_CONTENT,CREATE_CLASS_SUBJECT);
             return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreateId));
         }
         return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
@@ -94,7 +100,7 @@ public class StudentController {
 
         Long userApplyId = applyClassRequest.getUserId();
         User checkUser = userService.findByID(userApplyId);
-        Student student = studentService.findByUserId(userApplyId);
+        Student checkStudent = studentService.findByUserId(userApplyId);
 
         Long classId = applyClassRequest.getClassId();
         Classroom classroom = classroomService.findById(classId);
@@ -110,35 +116,42 @@ public class StudentController {
         if (classroom.getUserTeachId()==Long.parseLong(classroom.getCreatedBy())
                 &&checkTimes
                 &&!userApplyId.equals(classroom.getUserTeachId())
-                &&student.getGrade()>=classroom.getGrade()
+                &&checkStudent.getGrade()>=classroom.getGrade()
                 &&classroom.getState().equals(STATE_WAITING)){
 
+            User checkTutor = userService.findByID(Long.parseLong(classroom.getCreatedBy()));
             log.info("Student apply a class in Controller");
             if (!classStudentService.existByClassIdAndUserId(classId,userApplyId)){
                 classStudentService.createClassroomStudent(userApplyId,classId, STATE_APPLY);
                 checkUser.setCoin(checkUser.getCoin()-fee);
                 userService.updateUser(checkUser);
+                emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                emailService.sendAnEmail(checkTutor.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                 return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
             }
             else{
                 ClassStudent checkClassStudent = classStudentService.findByClassIdAndUserId(classId,userApplyId);
-                if (checkClassStudent.getState().equals(STATE_APPLY)){
-                    return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_BEFORE));
-                }
-                if (checkClassStudent.getState().equals(STATE_CANCELED)){
-                    checkClassStudent.setState(STATE_APPLY);
-                    Boolean updateClassStudent= classStudentService.updateClassroomStudent(checkClassStudent);
-                    if (updateClassStudent){
-                        checkUser.setCoin(checkUser.getCoin()-fee);
-                        userService.updateUser(checkUser);
-                        return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
+                switch (checkClassStudent.getState()){
+                    case STATE_APPLY:{
+                        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_BEFORE));
+                    }
+                    case STATE_CANCELED:{
+                        Boolean updateClassStudent= classStudentService.updateClassroomStudent(checkClassStudent);
+                        if (updateClassStudent){
+                            checkUser.setCoin(checkUser.getCoin()-fee);
+                            userService.updateUser(checkUser);
+                            emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                            emailService.sendAnEmail(checkTutor.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
+                            return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
+                        }
+                    }
+                    default:{
+                        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
                     }
                 }
             }
         }
-
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
-
     }
 
     @PostMapping("/approve")
@@ -177,14 +190,18 @@ public class StudentController {
             if(classStudentService.updateClassroomStudent(classStudent)
                     &&classTutorService.updateClassroomTutor(checkClassTutor)
                     &&classTutorService.updateListTutorClassroomTutor(classId,STATE_APPLY,STATE_REJECTED)){
+                User checkStudent = userService.findByID(userCreatedId);
+
                 List<Long> tutorBeRejectedId = classTutorService.getListUserID(classId,STATE_REJECTED);
+
                 //lay 12.5% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
                 Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
                 List <Long> studentIds = new ArrayList<>();
                 studentIds.add(userCreatedId);
                 if (userService.refundUserBeRejected(tutorBeRejectedId,fee)
                         &&tutorStudentSerivce.createListStudentService(classId,userApprovedId,studentIds)){
-                    return ResponseEntity.ok("Class is starting, check your class");
+                    emailService.sendAnEmail(checkStudent.getEmail(),APPROVE_TUTOR_CONTENT, APPROVE_TUTOR_SUBJECT);
+                    return ResponseEntity.ok("Class is starting, check your class processing");
                 }
             }
         }
@@ -197,10 +214,10 @@ public class StudentController {
     public ResponseEntity<?> studentCancelApplyClass(@Valid @RequestBody ApplyClassRequest applyClassRequest){
         log.info("Student cancel sign up a class in Controller");
 
-        Long userApplyId = applyClassRequest.getUserId();
+        Long studentCancelApplyId = applyClassRequest.getUserId();
         Long classId = applyClassRequest.getClassId();
 
-        ClassStudent classStudent = classStudentService.findByClassIdAndUserId(classId,userApplyId);
+        ClassStudent classStudent = classStudentService.findByClassIdAndUserId(classId,studentCancelApplyId);
 
         if (classStudent==null){
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_APPLY_NOT_FOUND));
@@ -208,17 +225,23 @@ public class StudentController {
 
         Classroom classroom = classroomService.findById(classId);
 
-        if (userApplyId!=Long.parseLong(classroom.getCreatedBy())
+        if (studentCancelApplyId!=Long.parseLong(classroom.getCreatedBy())
                 &&classroom.getState().equals(STATE_WAITING)
                 &&classStudent!=null){
             if (classStudent.getState().equals(STATE_APPROVED)){
                 classroom.setCurrentNum(classroom.getCurrentNum()-1);
                 classroomService.updateClassroom(classroom);
+                Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
+                classStudent.setState(STATE_CANCELED);
+                User studentCancelApplication = userService.findByID(studentCancelApplyId);
+                studentCancelApplication.setCoin(studentCancelApplication.getCoin()+fee);
+                userService.updateUser(studentCancelApplication);
+                if (classStudentService.updateClassroomStudent(classStudent)){
+                    emailService.sendAnEmail(studentCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
+                    return ResponseEntity.ok(ACTION_CANCEL_APPLY);
+                }
             }
-            classStudent.setState(STATE_CANCELED);
-            if (classStudentService.updateClassroomStudent(classStudent)){
-                return ResponseEntity.ok(ACTION_CANCEL_APPLY);
-            }
+
         }
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
     }

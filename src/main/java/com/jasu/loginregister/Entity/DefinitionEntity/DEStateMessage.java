@@ -45,4 +45,82 @@ public class DEStateMessage {
     public static final String ACTION_APPLY_BEFORE = "You have applied for this class before";
     public static final String ACTION_APPLY_NOT_FOUND = "This user could not be found applying for this class";
     public static final String ACTION_CANCEL_APPLY = "You cancel application to this class";
+
+
+    //Define email subject
+    public static final String VERIFICATION_SUBJECT = "Verify email.";
+    public static final String WELCOME_SUBJECT = "Welcome to JASU";
+    public static final String TUTOR_SUBJECT = "Registry tutor successfully";
+    public static final String STUDENT_SUBJECT = "Registry student successfully";
+    public static final String CREATE_CLASS_SUBJECT = "Create class successfully";
+    public static final String APPLY_CLASS_SUBJECT = "Apply class successfully";
+    public static final String HAVE_NEW_APPLICATION_SUBJECT = "Have new application";
+    public static final String APPROVE_STUDENT_SUBJECT = "Approve student successfully";
+    public static final String APPROVE_TUTOR_SUBJECT = "Approve tutor successfully";
+    public static final String USER_APPROVED_SUBJECT = "Be approved to a class";
+    public static final String USER_REJECTED_SUBJECT = "Apply class unsuccessfully";
+    public static final String CANCEL_APPLY_CLASS_SUBJECT = "Apply class successfully";
+    public static final String CLASS_BEGINNING_SUBJECT = "Class is beginning";
+
+    //Define email body
+    public static final String VERIFICATION_CONTENT = "Verifying that you registry with us.";
+
+    public static final String WELCOME_CONTENT = "Welcome to JASU!!\n" +
+            "JASU is a network of connections between students and tutors," +
+            " where you can choose the right tutor without the middleman.\n" +
+            "Have a good time!ヾ(≧▽≦*)o";
+
+    public static final String TUTOR_CONTENT = "Now you are a tutor!\n" +
+            "Find or create several classes to find the suitable student for you.\n" +
+            "Have a nice time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String STUDENT_CONTENT = "Now you are a student!\n" +
+            "Find or create several classes to find the suitable tutor for you.\n" +
+            "Have a nice time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String CREATE_CLASS_CONTENT = "You create class successfully!\n" +
+            "Please wait a while for others to sign up for your class!\n" +
+            "Classes will be open for 2 weeks.\n" +
+            "When the time is up and you have not approved any one, you can extend the time for another 2 weeks until you find the right one.\n" +
+            "Have a nice time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String APPLY_CLASS_CONTENT = "Apply class successfully\n" +
+            "Please wait for the creator of this class to approve you.\n" +
+            "We will notify you as soon as possible\n" +
+            "If you are not approved when the class expires, the registration fee will be refunded to you\n" +
+            "Have a nice time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String HAVE_NEW_APPLICATION_CONTENT = "You have a new application\n" +
+            "Please check the created class information to see new application\n" +
+            "Have a nice time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String APPROVE_STUDENT_CONTENT = "You have approved this student for class!\n" +
+            "The current student is already on the approved list.\n" +
+            "When the class begin, please check your class in your classroom manager's processing classes section to see tutor information.\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String APPROVE_TUTOR_CONTENT = "You have approved this tutor for class!\n" +
+            "Class has begun!\n" +
+            "Please check your class in your classroom manager's processing classes section to see tutor information.\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String USER_APPROVED_CONTENT = "You have been approved into a class\n" +
+            "Please check the information in the approved class to see the class information\n" +
+            "If you want to cancel your application, we will refund your application fee\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String USER_REJECTED_CONTENT =  "So sad, class has started without you\n" +
+            "We have already refunded you, please check your account again\n" +
+            "There are still many classes waiting for you\n" +
+            "Please search for more suitable classes in JASU\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
+    public static final String CANCEL_APPLY_CLASS_CONTENT = "You have successfully canceled your class application!\n" +
+            "The registration amount has been refunded to your account.\n" +
+            "If you want to re-register for this class, please check in the canceled classes.\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
+
+
+    public static final String CLASS_BEGINNING_CONTENT = "A class has begun!\n" +
+            "Please check your class in your classroom manager's processing classes section to see tutor information.\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
 }

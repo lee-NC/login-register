@@ -14,8 +14,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class PushNotificationService {
 
-    private Logger logger = LoggerFactory.getLogger(PushNotificationService.class);
-
     private FCMService fcmService;
 
     private FirebaseApp firebaseApp;
@@ -29,7 +27,7 @@ public class PushNotificationService {
         try {
             fcmService.sendMessageToToken(request);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 
