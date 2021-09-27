@@ -85,7 +85,7 @@ public class StudentController {
             User checkUser = userService.findByID(userCreateId);
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.STUDENT.getAuthority(), userCreateId);
             classStudentService.createClassroomStudent(userCreateId,classDto.getId(),STATE_CREATE);
-            emailService.sendAnEmail(checkUser.getEmail(),CREATE_CLASS_CONTENT,CREATE_CLASS_SUBJECT);
+//            emailService.sendAnEmail(checkUser.getEmail(),CREATE_CLASS_CONTENT,CREATE_CLASS_SUBJECT);
             return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreateId));
         }
         return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
@@ -99,7 +99,7 @@ public class StudentController {
         log.info("Student apply a class in Controller");
 
         Long userApplyId = applyClassRequest.getUserId();
-        User checkUser = userService.findByID(userApplyId);
+        User userApply = userService.findByID(userApplyId);
         Student checkStudent = studentService.findByUserId(userApplyId);
 
         Long classId = applyClassRequest.getClassId();
@@ -107,7 +107,7 @@ public class StudentController {
 
         //lay 12.5% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
         Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
-        if (checkUser.getCoin()<fee){
+        if (userApply.getCoin()<fee){
             return ResponseEntity.badRequest().body("There is not enough coin in the account right now");
         }
 
@@ -123,9 +123,9 @@ public class StudentController {
             log.info("Student apply a class in Controller");
             if (!classStudentService.existByClassIdAndUserId(classId,userApplyId)){
                 classStudentService.createClassroomStudent(userApplyId,classId, STATE_APPLY);
-                checkUser.setCoin(checkUser.getCoin()-fee);
-                userService.updateUser(checkUser);
-                emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                userApply.setCoin(userApply.getCoin()-fee);
+                userService.updateUser(userApply);
+//                emailService.sendAnEmail(userApply.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
                 emailService.sendAnEmail(checkTutor.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                 return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
             }
@@ -138,9 +138,9 @@ public class StudentController {
                     case STATE_CANCELED:{
                         Boolean updateClassStudent= classStudentService.updateClassroomStudent(checkClassStudent);
                         if (updateClassStudent){
-                            checkUser.setCoin(checkUser.getCoin()-fee);
-                            userService.updateUser(checkUser);
-                            emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                            userApply.setCoin(userApply.getCoin()-fee);
+                            userService.updateUser(userApply);
+                            emailService.sendAnEmail(userApply.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
                             emailService.sendAnEmail(checkTutor.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                             return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
                         }
@@ -200,7 +200,7 @@ public class StudentController {
                 studentIds.add(userCreatedId);
                 if (userService.refundUserBeRejected(tutorBeRejectedId,fee)
                         &&tutorStudentSerivce.createListStudentService(classId,userApprovedId,studentIds)){
-                    emailService.sendAnEmail(checkStudent.getEmail(),APPROVE_TUTOR_CONTENT, APPROVE_TUTOR_SUBJECT);
+//                    emailService.sendAnEmail(checkStudent.getEmail(),APPROVE_TUTOR_CONTENT, APPROVE_TUTOR_SUBJECT);
                     return ResponseEntity.ok("Class is starting, check your class processing");
                 }
             }
@@ -237,7 +237,7 @@ public class StudentController {
                 studentCancelApplication.setCoin(studentCancelApplication.getCoin()+fee);
                 userService.updateUser(studentCancelApplication);
                 if (classStudentService.updateClassroomStudent(classStudent)){
-                    emailService.sendAnEmail(studentCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
+//                    emailService.sendAnEmail(studentCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
                     return ResponseEntity.ok(ACTION_CANCEL_APPLY);
                 }
             }

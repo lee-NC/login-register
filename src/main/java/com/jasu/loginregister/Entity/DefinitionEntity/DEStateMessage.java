@@ -61,6 +61,8 @@ public class DEStateMessage {
     public static final String USER_REJECTED_SUBJECT = "Apply class unsuccessfully";
     public static final String CANCEL_APPLY_CLASS_SUBJECT = "Apply class successfully";
     public static final String CLASS_BEGINNING_SUBJECT = "Class is beginning";
+    public static final String CLASS_CREATE_CANCEL_SUBJECT = "A class you created was cancelled";
+
 
     //Define email body
     public static final String VERIFICATION_CONTENT = "Verifying that you registry with us.";
@@ -123,4 +125,10 @@ public class DEStateMessage {
     public static final String CLASS_BEGINNING_CONTENT = "A class has begun!\n" +
             "Please check your class in your classroom manager's processing classes section to see tutor information.\n" +
             "Have a good time with JASU!ヾ(≧▽≦*)o";
+
+    public static final String CLASS_CREATE_CANCEL_CONTENT = "A class you created has been overdue and cancelled, the users applied with you have been cancelled.\n" +
+            "Please check the class information in the list of canceled classes\n" +
+            "If you want to recreate the class, choose to recreate the class so other users can apply in your class\n" +
+            "Have a good time with JASU!ヾ(≧▽≦*)o";
+
 }

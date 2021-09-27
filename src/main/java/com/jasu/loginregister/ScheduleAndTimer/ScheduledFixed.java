@@ -1,9 +1,7 @@
 package com.jasu.loginregister.ScheduleAndTimer;
 
-import com.jasu.loginregister.Entity.ClassStudent;
-import com.jasu.loginregister.Entity.ClassTutor;
-import com.jasu.loginregister.Entity.Classroom;
-import com.jasu.loginregister.Entity.RefreshToken;
+import com.jasu.loginregister.Email.EmailService;
+import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Repository.*;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +10,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -47,15 +47,17 @@ public class ScheduledFixed{
     @Autowired
     private RefreshTokenService refreshTokenService;
 
+    @Autowired
+    private EmailService emailService;
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 180000)
     public void updateStateClass() {
         log.info("Test refresh token up to time- The time is now {}", formatter.format(new Date()));
         refreshTokenService.updateByDelete();
     }
 
     @Scheduled(cron = "0 0 0 * * *")
-    public void reportTime() {
+    public void checkClassBeginTime() {
         log.info("Check Classroom " + new Date());
 
         List<Classroom> classroomList = classroomRepository.findAllByState(STATE_WAITING);
@@ -65,11 +67,13 @@ public class ScheduledFixed{
         for (Classroom classroom:classroomList) {
             long dayToStart = checkTime(classroom.getBeginDay());
             if (dayToStart<=0){//den ngay hoan thanh
+                User userCreate = userService.findByID(Long.parseLong(classroom.getCreatedBy()));
                 if (classroom.getUserTeachId()!=null){
 
 
                     Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
                     ClassTutor classTutor = classTutorService.findByClassIdAndUserId(classroom.getId(),Long.parseLong(classroom.getCreatedBy()));
+
 
                     if (classroom.getCurrentNum()>0){
                         classTutor.setState(STATE_PROCESSING);
@@ -84,6 +88,7 @@ public class ScheduledFixed{
                             List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_REJECTED);
                             if (tutorStudentSerivce.createListStudentService(classroom.getId(),Long.parseLong(classroom.getCreatedBy()),studentIds)
                                     &&userService.refundUserBeRejected(studentBeRejectedId,fee)) {
+                                emailService.sendAnEmail(userCreate.getEmail(),CLASS_BEGINNING_CONTENT,CLASS_BEGINNING_SUBJECT);
                                 continue;
                             }
                         }
@@ -112,10 +117,12 @@ public class ScheduledFixed{
 
                     if (classStudentService.updateClassroomStudent(classStudent)
                             &&classTutorService.updateListTutorClassroomTutor(classroom.getId(),STATE_APPLY, STATE_REJECTED)){
+
                         //lay 12.5% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
                         Long fee = ((classroom.getFee()/8)/classroom.getMaxNum())/100;
                         List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classroom.getId(),STATE_REJECTED);
                         if (userService.refundUserBeRejected(studentBeRejectedId,fee)) {
+                            emailService.sendAnEmail(userCreate.getEmail(),CLASS_CREATE_CANCEL_CONTENT, CLASS_CREATE_CANCEL_SUBJECT);
                             continue;
                         }
                     }
@@ -124,20 +131,60 @@ public class ScheduledFixed{
             }
         }
     }
-//
+    @Scheduled(cron = "0 0 1 * * *")
+    public void checkClassDoneTime() {
+        log.info("Check Classroom " + new Date());
+
+        List<Classroom> classroomList = classroomRepository.findAllByState(STATE_PROCESSING);
+        if (classroomList.isEmpty()){
+            return;
+        }
+        for (Classroom classroom:classroomList) {
+            long dayToStart = checkTime(endTime(classroom));
+            if (dayToStart<=0){//den ngay hoan thanh
+                ClassTutor classTutor = classTutorService.findByClassIdAndUserId(classroom.getId(),Long.parseLong(classroom.getCreatedBy()));
+                classTutor.setState(STATE_DONE);
+                classroom.setState(STATE_DONE);
+                classroomRepository.saveAndFlush(classroom);
+                if (classTutorService.updateClassroomTutor(classTutor)
+                        &&classStudentService.updateListStudentInClassroom(classroom.getId(),STATE_PROCESSING, STATE_DONE)){
+                    continue;
+                }
+            }
+        }
+    }
+
 //    @Scheduled(fixedRate = 5000)
 //    public void reportCurrentTime() {
 //        log.info("Rate - The time is now {}", formatter.format(new Date()));
 //    }
 
     //check time between two days
-    private long checkTime(String createTime){
+    private long checkTime(String checkTime){
         Date date = new Date();
         SimpleDateFormat formatterDate = new SimpleDateFormat("dd/MM/yyyy");
         String nowTime = formatterDate.format(date);
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        LocalDate lastDate = LocalDate.parse(createTime, dateTimeFormatter);
+        LocalDate lastDate = LocalDate.parse(checkTime, dateTimeFormatter);
         LocalDate nowDate = LocalDate.parse(nowTime, dateTimeFormatter);
         return ChronoUnit.DAYS.between(lastDate, nowDate);
+    }
+
+    private String endTime(Classroom classroom){
+        int count = classroom.getLesson().size();
+        int numWeeks = classroom.getNumLesson()/count;
+        int surplus = classroom.getNumLesson()%count;
+
+        Date lastDate = null;
+        try {
+            lastDate = new SimpleDateFormat("dd/MM/yyyy").parse(classroom.getBeginDay());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(lastDate);
+        calendar.add(Calendar.DATE, numWeeks*7+surplus);
+        SimpleDateFormat formatterDate = new SimpleDateFormat("dd/MM/yyyy");
+        return formatterDate.format(calendar.getTime());
     }
 }

@@ -35,6 +35,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+
+
     @GetMapping("/avatar/{filename}")
     public ResponseEntity<?> download(@PathVariable String filename) {
         File file = new File(UPLOAD_DIR + "/" + filename);

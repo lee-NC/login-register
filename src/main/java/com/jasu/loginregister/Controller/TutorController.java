@@ -73,7 +73,7 @@ public class TutorController {
 
     @PostMapping("/create_class")
     @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @Secured("TUTOR")
     public ResponseEntity<?> tutorCreateClass(@Valid @RequestBody CreateClassroomRequest createClassroomRequest){
         log.info("Tutor create class in Controller");
 
@@ -87,7 +87,7 @@ public class TutorController {
             User checkUser = userService.findByID(userCreatedId);
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.TUTOR.getAuthority(), userCreatedId);
             classTutorService.createClassroomTutor(userCreatedId,classDto.getId(),STATE_CREATE);
-            emailService.sendAnEmail(checkUser.getEmail(),CREATE_CLASS_CONTENT,CREATE_CLASS_SUBJECT);
+//            emailService.sendAnEmail(checkUser.getEmail(),CREATE_CLASS_CONTENT,CREATE_CLASS_SUBJECT);
             return ResponseEntity.ok(ClassMapper.toCreateClassVo(classDto,userCreatedId));
         }
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST,ACTION_UNSUCCESSFULLY));
@@ -95,18 +95,18 @@ public class TutorController {
 
     @PostMapping("/apply")
     @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @Secured("TUTOR")
     public ResponseEntity<?> tutorApplyClass(@Valid @RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor apply class in Controller");
 
         Long userApplyId = applyClassRequest.getUserId();
-        User checkUser = userService.findByID(userApplyId);
+        User userApply = userService.findByID(userApplyId);
         Long classId = applyClassRequest.getClassId();
         Classroom classroom = classroomService.findById(classId);
 
         //lay 20% tien phi 1 buoi hoc chia cho so nguoi tham gia cho 1 lan dang ki
         Long fee = ((classroom.getFee()/20)*classroom.getMaxNum())/100;
-        if (checkUser.getCoin()<fee){
+        if (userApply.getCoin()<fee){
             return ResponseEntity.badRequest().body("There is not enough coin in the account right now");
         }
 
@@ -119,9 +119,9 @@ public class TutorController {
 
             if (!classTutorService.existByClassIdAndUserId(classId,userApplyId)){
                 classTutorService.createClassroomTutor(userApplyId,classId,STATE_APPLY);
-                checkUser.setCoin(checkUser.getCoin()-fee);
-                userService.updateUser(checkUser);
-                emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                userApply.setCoin(userApply.getCoin()-fee);
+                userService.updateUser(userApply);
+//                emailService.sendAnEmail(userApply.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
                 emailService.sendAnEmail(checkStudent.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                 return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
             }
@@ -134,9 +134,9 @@ public class TutorController {
                     checkClassTutor.setState(STATE_APPLY);
                     Boolean updateClassTutor= classTutorService.updateClassroomTutor(checkClassTutor);
                     if (updateClassTutor){
-                        checkUser.setCoin(checkUser.getCoin()-fee);
-                        userService.updateUser(checkUser);
-                        emailService.sendAnEmail(checkUser.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
+                        userApply.setCoin(userApply.getCoin()-fee);
+                        userService.updateUser(userApply);
+//                        emailService.sendAnEmail(userApply.getEmail(),APPLY_CLASS_CONTENT, APPLY_CLASS_SUBJECT);
                         emailService.sendAnEmail(checkStudent.getEmail(),HAVE_NEW_APPLICATION_CONTENT, HAVE_NEW_APPLICATION_SUBJECT);
                         return ResponseEntity.ok(ACTION_APPLY_SUCCESSFUL);
                     }
@@ -148,7 +148,7 @@ public class TutorController {
 
     @PostMapping("/approve")
     @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @Secured("TUTOR")
     public ResponseEntity<?> tutorApproveClass(@Valid @RequestBody ApproveClassRequest approveClassRequest){
         log.info("Tutor approve a student for a class in Controller");
 
@@ -182,7 +182,7 @@ public class TutorController {
                 checkClassStudent.setState(STATE_APPROVED);
                 if(classStudentService.updateClassroomStudent(checkClassStudent)){
                     User userApply = userService.findByID(userApprovedId);
-                    emailService.sendAnEmail(userCreate.getEmail(),APPROVE_STUDENT_CONTENT,APPROVE_STUDENT_SUBJECT);
+//                    emailService.sendAnEmail(userCreate.getEmail(),APPROVE_STUDENT_CONTENT,APPROVE_STUDENT_SUBJECT);
                     emailService.sendAnEmail(userApply.getEmail(),USER_APPROVED_CONTENT,USER_APPROVED_SUBJECT);
                     return ResponseEntity.ok("You approved a student in this class. Classroom will start in begin day");
                 }
@@ -207,7 +207,7 @@ public class TutorController {
                     List<Long> studentBeRejectedId = classStudentService.getListUserIDByClassIdAndState(classId,STATE_REJECTED);
                     if (tutorStudentSerivce.createListStudentService(classId,userCreatedId,studentIds)
                         &&userService.refundUserBeRejected(studentBeRejectedId,fee)) {
-                        emailService.sendAnEmail(userCreate.getEmail(),APPROVE_STUDENT_CONTENT,APPROVE_STUDENT_SUBJECT);
+//                        emailService.sendAnEmail(userCreate.getEmail(),APPROVE_STUDENT_CONTENT,APPROVE_STUDENT_SUBJECT);
 
                         return ResponseEntity.ok("Class is starting, check your class");
                     }
@@ -219,7 +219,7 @@ public class TutorController {
 
     @PostMapping("/cancel_apply")
     @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @Secured("TUTOR")
     public ResponseEntity<?> tutorCancelApplyClass(@Valid @RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor cancel sign up class in Controller");
 
@@ -243,7 +243,7 @@ public class TutorController {
             userService.updateUser(tutorCancelApplication);
             checkClassTutor.setState(STATE_CANCELED);
             if (classTutorService.updateClassroomTutor(checkClassTutor)){
-                emailService.sendAnEmail(tutorCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
+//                emailService.sendAnEmail(tutorCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
                 return ResponseEntity.ok(ACTION_CANCEL_APPLY);
             }
         }
@@ -352,7 +352,7 @@ public class TutorController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("STUDENT")
+    @Secured("TUTOR")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long id) {
         User user = userService.updateDetailUser(req, id);
         Tutor updateTutor = null;
