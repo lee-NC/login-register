@@ -4,7 +4,7 @@ import com.jasu.loginregister.Entity.DefinitionEntity.BaseEntity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "jasu_classroom")
@@ -35,7 +35,7 @@ public class Classroom  extends BaseEntity {
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JoinTable(name = "jasu_schedule",joinColumns = {@JoinColumn(name = "classroom_schedule_id",referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "lesson_schedule_id",referencedColumnName = "id")})
-    private List<Lesson> lesson;
+    private Set<Lesson> lesson;
 
     @Column(nullable = false)
     private Long fee;

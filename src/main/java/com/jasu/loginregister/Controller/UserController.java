@@ -28,7 +28,7 @@ import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.YEAR
 @RequestMapping("/user")
 public class UserController {
 
-    private static String UPLOAD_DIR = System.getProperty("user.home") + "/upload";
+    private static final String UPLOAD_DIR = System.getProperty("user.home") + "/upload";
 
     @Autowired
     private UserService userService;
@@ -87,10 +87,10 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @Secured({"ADMIN","STAFF"})
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.deleteUser(id));
     }
-
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
@@ -102,7 +102,8 @@ public class UserController {
         if (userRoleService.existUserRole(id, DeRole.STUDENT.getAuthority())){
             if (req.getUpdateStudentRequest()!=null){
                 Student student = studentService.findByUserId(id);
-                if (req.getUpdateStudentRequest().getGrade()>0&&req.getUpdateStudentRequest().getGrade()<13){
+                if (req.getUpdateStudentRequest().getGrade()>0&&req.getUpdateStudentRequest().getGrade()<13
+                        &&req.getUpdateStudentRequest().getGrade()!=student.getGrade()){
                     student.setGrade(req.getUpdateStudentRequest().getGrade());
                 }
                 updateStudent = studentService.updateStudent(student);
@@ -120,10 +121,10 @@ public class UserController {
 
     private Tutor updateTutor(Tutor checkTutor, UpdateTutorRequest updateTutorRequest){
 
-        if (updateTutorRequest.getExperience()!=0f){
+        if (updateTutorRequest.getExperience()!=0f&&updateTutorRequest.getExperience()!=checkTutor.getExperience()){
             checkTutor.setExperience(updateTutorRequest.getExperience());
         }
-        if (updateTutorRequest.getLiteracy()!=null){
+        if (updateTutorRequest.getLiteracy()!=null&&!updateTutorRequest.getLiteracy().equalsIgnoreCase(checkTutor.getLiteracy())){
             checkTutor.setLiteracy(updateTutorRequest.getLiteracy());
         }
         return checkTutor;
@@ -132,50 +133,57 @@ public class UserController {
     @PutMapping("/achievement/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR')")
     @Secured({"TUTOR"})
-    public ResponseEntity<?> updateAchievementTutor(@Valid @RequestBody UpdateAchievementRequest req, @PathVariable("id") Long userId) {
+    public ResponseEntity<?> updateAchievementTutor(@Valid @RequestBody UpdateAchievementRequest req,
+                                                    @PathVariable("id") Long userId) {
+        log.info("update achievement in Controller");
         User user = userService.findByID(userId);
         Student student = null;
         Tutor tutor = null;
+        if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
+            tutor = tutorService.findByUserId(userId);
+            for (Achievement achievement:tutor.getAchievements()) {
+                if (achievement.getId()==req.getId()){
+                    if (req.getAchievement()!=null&&!achievement.getAchievement().equals(req.getAchievement())){
+                        achievement.setAchievement(req.getAchievement());
+                    }
+                    if (req.getYear()>YEAR_ACHIEVEMENT&&achievement.getYear()!= req.getYear()){
+                        achievement.setYear(req.getYear());
+                    }
+                    tutor.getAchievements().add(achievement);
+                    tutorService.updateTutor(tutor);
+                }
+            }
+            tutor = tutorService.findByUserId(userId);
+        }
         if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
             student = studentService.findByUserId(userId);
         }
-        if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
-            tutor = tutorService.findByUserId(userId);
-            Achievement achievement = achievementService.findById(req.getId());
-            if (req.getAchievement()!=null){
-                achievement.setAchievement(req.getAchievement());
-            }
-            if (req.getYear()>YEAR_ACHIEVEMENT){
-                achievement.setYear(req.getYear());
-            }
-            if (achievementService.existedByTutorAndAchievement(tutor,req.getAchievement())){
-                return ResponseEntity.ok("Achievement was existed");
-            }
-            achievementService.updateAchievement(achievement);
-            tutor = tutorService.findByUserId(userId);
-        }
+
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
 
     @PostMapping("/achievement/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR')")
     @Secured({"TUTOR"})
-    public ResponseEntity<?> createAchievementTutor(@Valid @RequestBody AchievementRequest req, @PathVariable("id") Long userId) {
+    public ResponseEntity<?> createAchievementTutor(@Valid @RequestBody AchievementRequest req,
+                                                    @PathVariable("id") Long userId) {
+        log.info("create achievement in Controller");
         User user = userService.findByID(userId);
         Student student = null;
         Tutor tutor = null;
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
-            if (achievementService.existedByTutorAndAchievement(tutor,req.getAchievement())){
-                return ResponseEntity.ok("Achievement was existed");
-            }
             Achievement achievement = new Achievement(tutor,req.getAchievement(),req.getYear());
-            achievementService.createAchievement(achievement);
+            achievement.setTutor(tutor);
+            tutor.getAchievements().add(achievement);
+            tutorService.updateTutor(tutor);
             tutor = tutorService.findByUserId(userId);
-
+        }
+        else {
+            return ResponseEntity.badRequest().body("No tutor found");
+        }
+        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
+            student = studentService.findByUserId(userId);
         }
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
@@ -183,17 +191,27 @@ public class UserController {
     @DeleteMapping("/achievement/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR')")
     @Secured({"TUTOR"})
-    public ResponseEntity<?> deleteAchievementTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req, @PathVariable("id") Long userId) {
+    public ResponseEntity<?> deleteAchievementTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req,
+                                                    @PathVariable("id") Long userId) {
+        log.info("Delete achievement in Controller");
         User user = userService.findByID(userId);
         Student student = null;
         Tutor tutor = null;
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             Achievement achievement = achievementService.findById(req.getId());
-            achievementService.deleteAchievement(achievement);
-            tutor = tutorService.findByUserId(userId);
+            if (achievement.getTutor().getUserTutorId().equals(userId)){
+                achievementService.deleteAchievement(achievement);
+                tutor = tutorService.findByUserId(userId);
+            }
+            else {
+                return ResponseEntity.badRequest().body("No achievement found");
+            }
+        }
+        else {
+            return ResponseEntity.badRequest().body("No tutor found");
+        }
+        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
+            student = studentService.findByUserId(userId);
         }
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
@@ -201,20 +219,28 @@ public class UserController {
     @PutMapping("/school/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR')")
     @Secured({"TUTOR"})
-    public ResponseEntity<?> updateSchoolTutor(@Valid @RequestBody UpdateSchoolRequest req, @PathVariable("id") Long userId) {
+    public ResponseEntity<?> updateSchoolTutor(@Valid @RequestBody UpdateSchoolRequest req,
+                                               @PathVariable("id") Long userId) {
+        log.info("updateSchool in Controller");
         User user = userService.findByID(userId);
         Student student = null;
         Tutor tutor = null;
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             School school = schoolService.findBySchoolID(req.getId());
-            if (req.getSchoolName()!=null){
-                school.setSchoolName(req.getSchoolName());
+            if (school.getTutor().getUserTutorId()==userId){
+                if (req.getSchoolName()!=null&&!req.getSchoolName().equalsIgnoreCase(school.getSchoolName())){
+                    school.setSchoolName(req.getSchoolName());
+                }
             }
-            schoolService.updateSchool(school);
+            else {
+                return ResponseEntity.badRequest().body("No school found");
+            }
             tutor = tutorService.findByUserId(userId);
+        }else {
+            return ResponseEntity.badRequest().body("No tutor found");
+        }
+        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
+            student = studentService.findByUserId(userId);
         }
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
@@ -222,21 +248,24 @@ public class UserController {
     @PostMapping("/school/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR')")
     @Secured({"TUTOR"})
-    public ResponseEntity<?> createSchoolTutor(@Valid @RequestBody SchoolRequest req, @PathVariable("id") Long userId) {
+    public ResponseEntity<?> createSchoolTutor(@Valid @RequestBody SchoolRequest req,
+                                               @PathVariable("id") Long userId) {
+        log.info("createSchool in Controller");
         User user = userService.findByID(userId);
         Student student = null;
         Tutor tutor = null;
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
+
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
-            if (schoolService.existedByTutorAndSchoolName(tutor,req.getSchoolName())){
-                return ResponseEntity.ok("School was existed");
-            }
             School school = new School(tutor,req.getSchoolName());
-            schoolService.createSchool(school);
             tutor = tutorService.findByUserId(userId);
+            tutor.getSchools().add(school);
+            tutorService.updateTutor(tutor);
+        }else {
+            return ResponseEntity.badRequest().body("No tutor found");
+        }
+        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
+            student = studentService.findByUserId(userId);
         }
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
@@ -244,17 +273,28 @@ public class UserController {
     @DeleteMapping("/school/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR')")
     @Secured({"TUTOR"})
-    public ResponseEntity<?> deleteSchoolTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req, @PathVariable("id") Long userId) {
+    public ResponseEntity<?> deleteSchoolTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req,
+                                               @PathVariable("id") Long userId) {
+        log.info("Delete School in Controller");
         User user = userService.findByID(userId);
         Student student = null;
         Tutor tutor = null;
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
+
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             School school = schoolService.findBySchoolID(req.getId());
-            schoolService.deleteSchool(school);
-            tutor = tutorService.findByUserId(userId);
+            if (school.getTutor().getUserTutorId()==userId){
+                schoolService.deleteSchool(school);
+                tutor = tutorService.findByUserId(userId);
+            }
+            else {
+                return ResponseEntity.badRequest().body("No school found");
+            }
+
+        }else {
+            return ResponseEntity.badRequest().body("No tutor found");
+        }
+        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
+            student = studentService.findByUserId(userId);
         }
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }

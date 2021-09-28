@@ -12,5 +12,5 @@ public class DeleteAchievementSchoolRequest {
             example="Achievement id",
             notes="Achievement id cannot be empty"
     )
-    private Long Id;
+    private Long id;
 }

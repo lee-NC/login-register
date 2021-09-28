@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 
 @Service
@@ -17,18 +18,6 @@ public class LessonServiceImpl implements LessonService {
     @Autowired
     private LessonRepository lessonRepository;
 
-    @Override
-    public void deleteLessonById(Long id) {
-        try {
-            Optional<Lesson> lesson = lessonRepository.findById(id);
-            if (lesson==null){
-                throw new NotFoundException("No lesson found");
-            }
-            lessonRepository.delete(lesson.get());
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
 
     @Override
     public Lesson findById(Long id) {
@@ -40,26 +29,7 @@ public class LessonServiceImpl implements LessonService {
         return lesson.get();
     }
 
-    @Override
-    public void updateLesson(Lesson lesson) {
-        try {
-            lessonRepository.saveAndFlush(lesson);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-    @Override
-    public void createLesson(Lesson lesson) {
-        try {
-            lessonRepository.saveAndFlush(lesson);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
+    @Transactional
     @Override
     public void deleteLesson(Lesson lesson) {
         try {
@@ -68,10 +38,5 @@ public class LessonServiceImpl implements LessonService {
         catch (Exception e){
             System.out.println(e.getMessage());
         }
-    }
-
-    @Override
-    public boolean existedByBeginTimeAndEndTimeAndDayOfWeek(String beginTime, String endTime, String dayOfWeek) {
-        return lessonRepository.existsByBeginTimeAndEndTimeAndDayOfWeek(beginTime, endTime, dayOfWeek);
     }
 }

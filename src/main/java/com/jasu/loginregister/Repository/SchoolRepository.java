@@ -10,5 +10,4 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface SchoolRepository extends JpaRepository<School,Long> {
-    boolean existsByTutorAndSchoolName(Tutor tutor, String schoolName);
 }

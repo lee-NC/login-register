@@ -10,5 +10,4 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface AchievementRepository extends JpaRepository<Achievement,Long> {
-    boolean existsByTutorAndAchievement(Tutor tutor, String achievement);
 }

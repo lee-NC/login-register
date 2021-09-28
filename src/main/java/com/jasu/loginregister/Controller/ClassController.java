@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.ACTION_UNSUCCESSFULLY;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.STATE_WAITING;
 
 @RestController
 @Slf4j
@@ -132,10 +133,10 @@ public class ClassController {
         return ResponseEntity.ok(classroomList);
     }
 
-    @PutMapping("/classroom/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
     @Secured({"STUDENT","TUTOR"})
-    public ResponseEntity<?> updateCreateClass(@Valid @RequestBody UpdateClassroomRequest updateClassroomRequest, @PathVariable("id") Long classId){
+    public ResponseEntity<?> updateClassInformation(@Valid @RequestBody UpdateClassroomRequest updateClassroomRequest, @PathVariable("id") Long classId){
         log.info("Update create class in Controller");
 
         Long userCreateId = updateClassroomRequest.getUserCreateId();
@@ -143,14 +144,15 @@ public class ClassController {
         Classroom classroom = classroomService.findById(classId);
 
         if (userCreateId==Long.parseLong(classroom.getCreatedBy())
-                &&classroom.getUserTeachId()==null){
+            &&classroom.getState().equals(STATE_WAITING)){
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
             if (updateClassroomRequest.getSubject()!=null){
                 if (subjectService.existBySubjectName(updateClassroomRequest.getSubject().toUpperCase(Locale.ROOT))){
-                    classroom.setSubject(updateClassroomRequest.getSubject());
+                    classroom.setSubject(updateClassroomRequest.getSubject().toUpperCase(Locale.ROOT));
                 }
             }
+
             if (updateClassroomRequest.getMaxNum()!=0){
                 classroom.setCurrentNum(updateClassroomRequest.getMaxNum());
                 classroom.setMaxNum(updateClassroomRequest.getMaxNum());
@@ -171,9 +173,10 @@ public class ClassController {
             if (updateClassroomRequest.getType()!=null){
                 classroom.setType(updateClassroomRequest.getType());
             }
+
             classroomService.updateClassroom(classroom);
-            Classroom updateClassroom = classroomService.findById(classId);
-            return ResponseEntity.ok(ClassMapper.toCreateClassVo(ClassMapper.toClassDto(updateClassroom),userCreateId));
+            classroom = classroomService.findById(classId);
+            return ResponseEntity.ok(ClassMapper.toCreateClassVo(ClassMapper.toClassDto(classroom),userCreateId));
         }
         return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
 
@@ -182,51 +185,56 @@ public class ClassController {
     @PutMapping("/lesson/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR','STUDENT')")
     @Secured({"TUTOR","STUDENT"})
-    public ResponseEntity<?> updateLessonTutor(@Valid @RequestBody UpdateLessonRequest req, @PathVariable("id") Long classId) {
+    public ResponseEntity<?> updateLesson(@Valid @RequestBody UpdateLessonRequest req, @PathVariable("id") Long classId) {
 
         Classroom result = classroomService.findById(classId);
-        Lesson lesson = lessonService.findById(req.getId());
-        if (req.getBeginTime()!=null){
-            lesson.setBeginTime(req.getBeginTime());
+        for (Lesson lesson: result.getLesson()){
+            if (lesson.getId()==req.getId()){
+                if (req.getBeginTime()!=null&&!req.getBeginTime().equals(lesson.getBeginTime())){
+                    lesson.setBeginTime(req.getBeginTime());
+                }
+                if (req.getEndTime()!=null&&!req.getEndTime().equals(lesson.getEndTime())){
+                    lesson.setEndTime(req.getEndTime());
+                }
+                if (req.getDayOfWeek()!=null&&!req.getDayOfWeek().equals(lesson.getDayOfWeek())){
+                    lesson.setDayOfWeek(req.getDayOfWeek().toUpperCase(Locale.ROOT));
+                }
+                classroomService.updateClassroom(result);
+                ClassDto classDto = ClassMapper.toClassDto(classroomService.findById(classId));
+                return ResponseEntity.ok(classDto);
+            }
         }
-        if (req.getEndTime()!=null){
-            lesson.setEndTime(req.getEndTime());
-        }
-        if (req.getDayOfWeek()!=null){
-            lesson.setDayOfWeek(req.getDayOfWeek());
-        }
-        if (lessonService.existedByBeginTimeAndEndTimeAndDayOfWeek(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek())){
-            return ResponseEntity.badRequest().body(new DuplicateFormatFlagsException("Achievement was existed"));
-        }
-        lessonService.updateLesson(lesson);
-        result = classroomService.findById(classId);
-        ClassDto classDto = ClassMapper.toClassDto(result);
-        return ResponseEntity.ok(classDto);
+        return ResponseEntity.badRequest().body("No lesson found");
     }
 
     @PostMapping("/lesson/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR','STUDENT')")
     @Secured({"TUTOR","STUDENT"})
-    public ResponseEntity<?> createlessonTutor(@Valid @RequestBody LessonRequest req, @PathVariable("id") Long classId) {
-        Lesson lesson = new Lesson(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek());
-        if (lessonService.existedByBeginTimeAndEndTimeAndDayOfWeek(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek())){
-            return ResponseEntity.badRequest().body(new DuplicateFormatFlagsException("Achievement was existed"));
-        }
-        lessonService.createLesson(lesson);
+    public ResponseEntity<?> createLesson(@Valid @RequestBody LessonRequest req, @PathVariable("id") Long classId) {
         Classroom result = classroomService.findById(classId);
-        ClassDto classDto = ClassMapper.toClassDto(result);
+        Lesson lesson = new Lesson(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek());
+        result.getLesson().add(lesson);
+        classroomService.updateClassroom(result);
+        ClassDto classDto = ClassMapper.toClassDto(classroomService.findById(classId));
         return ResponseEntity.ok(classDto);
     }
 
     @DeleteMapping("/lesson/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR','STUDENT')")
     @Secured({"TUTOR","STUDENT"})
-    public ResponseEntity<?> deleteSchoolTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req, @PathVariable("id") Long classId) {
-        Lesson lesson = lessonService.findById(req.getId());
-        lessonService.deleteLesson(lesson);
+    public ResponseEntity<?> deleteLesson(@Valid @RequestBody DeleteAchievementSchoolRequest req, @PathVariable("id") Long classId) {
         Classroom result = classroomService.findById(classId);
-        ClassDto classDto = ClassMapper.toClassDto(result);
-        return ResponseEntity.ok(classDto);
+        for (Lesson lesson: result.getLesson()){
+            if (lesson.getId()==req.getId()){
+                result.getLesson().remove(lesson);
+                classroomService.updateClassroom(result);
+                lessonService.deleteLesson(lesson);
+                ClassDto classDto = ClassMapper.toClassDto(classroomService.findById(classId));
+                return ResponseEntity.ok(classDto);
+            }
+        }
+        return ResponseEntity.badRequest().body("No lesson found");
+
     }
 
 }

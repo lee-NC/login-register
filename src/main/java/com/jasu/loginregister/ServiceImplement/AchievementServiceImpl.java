@@ -1,16 +1,18 @@
 package com.jasu.loginregister.ServiceImplement;
 
 import com.jasu.loginregister.Entity.Achievement;
-import com.jasu.loginregister.Entity.Tutor;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Repository.AchievementRepository;
 import com.jasu.loginregister.Service.AchievementService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class AchievementServiceImpl implements AchievementService {
 
     @Autowired
@@ -18,6 +20,7 @@ public class AchievementServiceImpl implements AchievementService {
 
     @Override
     public Achievement findById(Long achievementId) {
+        log.info("Find achievement in Service");
         Optional<Achievement> achievement = achievementRepository.findById(achievementId);
         if (!achievement.isPresent()){
             throw new NotFoundException("No achievement found");
@@ -25,33 +28,10 @@ public class AchievementServiceImpl implements AchievementService {
         return achievement.get();
     }
 
-    @Override
-    public void updateAchievement(Achievement achievement) {
-        try {
-            achievementRepository.saveAndFlush(achievement);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-    @Override
-    public void createAchievement(Achievement achievement) {
-        try {
-            achievementRepository.saveAndFlush(achievement);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-    @Override
-    public boolean existedByTutorAndAchievement(Tutor tutor, String achievement) {
-        return achievementRepository.existsByTutorAndAchievement(tutor,achievement);
-    }
-
+    @Transactional
     @Override
     public void deleteAchievement(Achievement achievement) {
+        log.info("Delete achievement in Service");
         try {
             achievementRepository.delete(achievement);
         }
@@ -59,4 +39,5 @@ public class AchievementServiceImpl implements AchievementService {
             System.out.println(e.getMessage());
         }
     }
+
 }

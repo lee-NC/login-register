@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 
 @Service
@@ -22,40 +23,18 @@ public class SchoolServiceImpl implements SchoolService {
 
     @Override
     public School findBySchoolID(Long schoolId) {
+        log.info("Find school in Service");
         Optional<School> school = schoolRepository.findById(schoolId);
         if (!school.isPresent()){
-            throw new NotFoundException("No achievement found");
+            throw new NotFoundException("No school found");
         }
         return school.get();
     }
 
     @Override
-    public void updateSchool(School school) {
-        try {
-            schoolRepository.saveAndFlush(school);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-    @Override
-    public void createSchool(School school) {
-        try {
-            schoolRepository.saveAndFlush(school);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-    @Override
-    public boolean existedByTutorAndSchoolName(Tutor tutor, String schoolName) {
-        return schoolRepository.existsByTutorAndSchoolName(tutor,schoolName);
-    }
-
-    @Override
+    @Transactional
     public void deleteSchool(School school) {
+        log.info("delete school in Service");
         try {
             schoolRepository.delete(school);
         }

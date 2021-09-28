@@ -8,17 +8,14 @@ import com.jasu.loginregister.Model.Request.RelatedToClass.LessonRequest;
 import com.jasu.loginregister.Model.ValueObject.CreateClassVo;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class ClassMapper {
 
     public static Classroom toClass(CreateClassroomRequest req,String roleKey, Long userCreateId) {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatterDate = new SimpleDateFormat("dd/MM/yyyy");
-        List<Lesson> lessonList = new ArrayList<>();
+        Set<Lesson> lessonList = new HashSet<>();
         for (LessonRequest lessonRequest : req.getListLesson()){
             Lesson lesson = new Lesson(lessonRequest.getBeginTime(),lessonRequest.getEndTime(),lessonRequest.getDayOfWeek().toUpperCase(Locale.ROOT));
             lessonList.add(lesson);
@@ -86,7 +83,7 @@ public class ClassMapper {
         classDto.setType(classroom.getType());
         classDto.setFee(classroom.getFee());
         classDto.setSubject(classroom.getSubject());
-//        classDto.setLessonList(classroom.getLesson());
+        classDto.setLessonList(classroom.getLesson());
 
         return classDto;
     }
