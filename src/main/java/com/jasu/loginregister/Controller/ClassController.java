@@ -1,16 +1,22 @@
 package com.jasu.loginregister.Controller;
 
 import com.jasu.loginregister.Entity.*;
+import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Dto.BasicDto.StudentDto;
 import com.jasu.loginregister.Model.Dto.BasicDto.TutorDto;
 import com.jasu.loginregister.Model.Dto.ClassDto;
 import com.jasu.loginregister.Model.Mapper.ClassMapper;
+import com.jasu.loginregister.Model.Mapper.UserDetailMapper;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
 import com.jasu.loginregister.Model.Request.ContentFilter;
+import com.jasu.loginregister.Model.Request.CreatedToUser.SchoolRequest;
 import com.jasu.loginregister.Model.Request.FilterRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.LessonRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.UpdateClassroomRequest;
+import com.jasu.loginregister.Model.Request.RelatedToClass.UpdateLessonRequest;
+import com.jasu.loginregister.Model.Request.UpdateToUser.DeleteAchievementSchoolRequest;
+import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateSchoolRequest;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +34,8 @@ import javax.validation.Valid;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.ACTION_UNSUCCESSFULLY;
 
 @RestController
 @Slf4j
@@ -48,6 +56,12 @@ public class ClassController {
 
     @Autowired
     private StudentService studentService;
+
+    @Autowired
+    private SubjectService subjectService;
+
+    @Autowired
+    private LessonService lessonService;
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('USER')")
@@ -100,11 +114,6 @@ public class ClassController {
     public ResponseEntity<?> searchClass(@RequestParam("key") String keyWord, Model model) {
         log.info("Search class in Controller");
         List<ClassDto> classroomList = classroomService.searchClass(keyWord.toLowerCase(Locale.ROOT));
-//        List<Long> classIdList = new ArrayList<>();
-//        for (ClassDto classDto: classroomList){
-//            classIdList.add(classDto.getId());
-//        }
-//        List<ClassStatusVo> classStatusVos = new ArrayList<>();
         model.addAttribute("listClass", classroomList);
         model.addAttribute("keyword",keyWord);
         return ResponseEntity.ok(model);
@@ -123,107 +132,101 @@ public class ClassController {
         return ResponseEntity.ok(classroomList);
     }
 
+    @PutMapping("/classroom/{id}")
+    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
+    @Secured({"STUDENT","TUTOR"})
+    public ResponseEntity<?> updateCreateClass(@Valid @RequestBody UpdateClassroomRequest updateClassroomRequest, @PathVariable("id") Long classId){
+        log.info("Update create class in Controller");
 
-//    @PutMapping("/classroom/{id}")
-//    @PreAuthorize("hasAnyAuthority('USER')")
-//    @Secured("USER")
-//    public ResponseEntity<?> updateCreateClass(@Valid @RequestBody UpdateClassroomRequest updateClassroomRequest,, @PathVariable("id") Long classId){
-//        log.info("Update create class in Controller");
-//
-//        Long userCreateId = updateClassroomRequest.getUserCreateId();
-//        Long classId = updateClassroomRequest.getClassId();
-//
-//        Classroom classroom = classroomService.findById(classId);
-//
-//        if (userCreateId==Long.parseLong(classroom.getCreatedBy())
-//                &&classroom.getUserTeachId()==null){
-//            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-//
-//            if (updateClassroomRequest.getSubject()!=null){
-//                Subject checkSubject = subjectService.checkBySubjectName(updateClassroomRequest.getSubject().toUpperCase(Locale.ROOT));
-//                if (checkSubject!=null){
-//                    classroom.setSubject(updateClassroomRequest.getSubject());
-//                }
-//            }
-//
-//            if (updateClassroomRequest.getMaxNum()!=0){
-//                classroom.setCurrentNum(updateClassroomRequest.getMaxNum());
-//                classroom.setMaxNum(updateClassroomRequest.getMaxNum());
-//            }
-//
-//            if (updateClassroomRequest.getBeginDay()!=null){
-//                classroom.setBeginDay(formatter.format(updateClassroomRequest.getBeginDay()));
-//            }
-//
-//            if (updateClassroomRequest.getNumLesson()!=0){
-//                classroom.setNumLesson(updateClassroomRequest.getNumLesson());
-//            }
-//
-//            if (updateClassroomRequest.getNote()!=null){
-//                classroom.setNote(updateClassroomRequest.getNote());
-//            }
-//
-//            if (updateClassroomRequest.getFee()!=0L){
-//                classroom.setFee(updateClassroomRequest.getFee());
-//            }
-//
-//            if (updateClassroomRequest.getType()!=null){
-//                classroom.setType(updateClassroomRequest.getType());
-//            }
-//
-//            if (!updateClassroomRequest.getListLesson().isEmpty()){
-//                List<Lesson> lessonList = classroom.getLesson();
-//                classroom.setLesson(updateLesson(lessonList,updateClassroomRequest));
-//            }
-//            Classroom updateClassroom = classroomService.updateClassroom(classroom);
-//            if (updateClassroom!=null){
-//                return ResponseEntity.ok(ClassMapper.toCreateClassVo(ClassMapper.toClassDto(updateClassroom),userCreateId));
-//            }
-//        }
-//        return ResponseEntity.ok("Have some wrong, try it later");
-//
-//    }
+        Long userCreateId = updateClassroomRequest.getUserCreateId();
 
-//    //check all field in an object are empty
-//    private Boolean checkEmpty(Lesson lesson) {
-//        return Stream.of(lesson.getBeginTime(), lesson.getEndTime(),lesson.getDayOfWeek())
-//                .allMatch(Objects::isNull);
-//    }
+        Classroom classroom = classroomService.findById(classId);
 
-//    //update list lesson
-//    private List<Lesson> updateLesson(List<Lesson> lessonList, UpdateClassroomRequest updateClassroomRequest){
-//        int count =0;
-//        if (lessonList.size()<=updateClassroomRequest.getListLesson().size()){
-//            count = lessonList.size();
-//
-//            for(int i=count;i<updateClassroomRequest.getListLesson().size();i++){
-//                String beginTime = updateClassroomRequest.getListLesson().get(i).getBeginTime();
-//                String endTime = updateClassroomRequest.getListLesson().get(i).getEndTime();
-//                String dayOfWeek = updateClassroomRequest.getListLesson().get(i).getDayOfWeek();
-//                Lesson lesson = new Lesson(beginTime,endTime,dayOfWeek);
-//                if (!checkEmpty(lesson)){
-//                    lessonList.add(lesson);
-//                }
-//            }
-//        }
-//        else {
-//            count = updateClassroomRequest.getListLesson().size();
-//            List<Lesson> lessonRemove = lessonList.subList(count,lessonList.size());
-//            lessonList.removeAll(lessonRemove);
-//        }
-//        for (int i=0;i<count;i++){
-//            if (updateClassroomRequest.getListLesson().get(i).getBeginTime()!=null){
-//                lessonList.get(i).setBeginTime(updateClassroomRequest.getListLesson().get(i).getBeginTime());
-//            }
-//            if (updateClassroomRequest.getListLesson().get(i).getEndTime()!=null){
-//                lessonList.get(i).setBeginTime(updateClassroomRequest.getListLesson().get(i).getEndTime());
-//            }
-//            if (updateClassroomRequest.getListLesson().get(i).getDayOfWeek()!=null){
-//                lessonList.get(i).setBeginTime(updateClassroomRequest.getListLesson().get(i).getDayOfWeek());
-//            }
-//        }
-//        return lessonList;
-//    }
+        if (userCreateId==Long.parseLong(classroom.getCreatedBy())
+                &&classroom.getUserTeachId()==null){
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
+            if (updateClassroomRequest.getSubject()!=null){
+                if (subjectService.existBySubjectName(updateClassroomRequest.getSubject().toUpperCase(Locale.ROOT))){
+                    classroom.setSubject(updateClassroomRequest.getSubject());
+                }
+            }
+            if (updateClassroomRequest.getMaxNum()!=0){
+                classroom.setCurrentNum(updateClassroomRequest.getMaxNum());
+                classroom.setMaxNum(updateClassroomRequest.getMaxNum());
+            }
+
+            if (updateClassroomRequest.getBeginDay()!=null){
+                classroom.setBeginDay(formatter.format(updateClassroomRequest.getBeginDay()));
+            }
+
+            if (updateClassroomRequest.getNote()!=null){
+                classroom.setNote(updateClassroomRequest.getNote());
+            }
+
+            if (updateClassroomRequest.getFee()!=0L){
+                classroom.setFee(updateClassroomRequest.getFee());
+            }
+
+            if (updateClassroomRequest.getType()!=null){
+                classroom.setType(updateClassroomRequest.getType());
+            }
+            classroomService.updateClassroom(classroom);
+            Classroom updateClassroom = classroomService.findById(classId);
+            return ResponseEntity.ok(ClassMapper.toCreateClassVo(ClassMapper.toClassDto(updateClassroom),userCreateId));
+        }
+        return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
+
+    }
+
+    @PutMapping("/lesson/{id}")
+    @PreAuthorize("hasAnyAuthority('TUTOR','STUDENT')")
+    @Secured({"TUTOR","STUDENT"})
+    public ResponseEntity<?> updateLessonTutor(@Valid @RequestBody UpdateLessonRequest req, @PathVariable("id") Long classId) {
+
+        Classroom result = classroomService.findById(classId);
+        Lesson lesson = lessonService.findById(req.getId());
+        if (req.getBeginTime()!=null){
+            lesson.setBeginTime(req.getBeginTime());
+        }
+        if (req.getEndTime()!=null){
+            lesson.setEndTime(req.getEndTime());
+        }
+        if (req.getDayOfWeek()!=null){
+            lesson.setDayOfWeek(req.getDayOfWeek());
+        }
+        if (lessonService.existedByBeginTimeAndEndTimeAndDayOfWeek(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek())){
+            return ResponseEntity.badRequest().body(new DuplicateFormatFlagsException("Achievement was existed"));
+        }
+        lessonService.updateLesson(lesson);
+        result = classroomService.findById(classId);
+        ClassDto classDto = ClassMapper.toClassDto(result);
+        return ResponseEntity.ok(classDto);
+    }
+
+    @PostMapping("/lesson/{id}")
+    @PreAuthorize("hasAnyAuthority('TUTOR','STUDENT')")
+    @Secured({"TUTOR","STUDENT"})
+    public ResponseEntity<?> createlessonTutor(@Valid @RequestBody LessonRequest req, @PathVariable("id") Long classId) {
+        Lesson lesson = new Lesson(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek());
+        if (lessonService.existedByBeginTimeAndEndTimeAndDayOfWeek(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek())){
+            return ResponseEntity.badRequest().body(new DuplicateFormatFlagsException("Achievement was existed"));
+        }
+        lessonService.createLesson(lesson);
+        Classroom result = classroomService.findById(classId);
+        ClassDto classDto = ClassMapper.toClassDto(result);
+        return ResponseEntity.ok(classDto);
+    }
+
+    @DeleteMapping("/lesson/{id}")
+    @PreAuthorize("hasAnyAuthority('TUTOR','STUDENT')")
+    @Secured({"TUTOR","STUDENT"})
+    public ResponseEntity<?> deleteSchoolTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req, @PathVariable("id") Long classId) {
+        Lesson lesson = lessonService.findById(req.getId());
+        lessonService.deleteLesson(lesson);
+        Classroom result = classroomService.findById(classId);
+        ClassDto classDto = ClassMapper.toClassDto(result);
+        return ResponseEntity.ok(classDto);
+    }
 
 }

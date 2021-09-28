@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AchievementDto {
+    private Long id;
     private String achievement;
     private int year;
 }

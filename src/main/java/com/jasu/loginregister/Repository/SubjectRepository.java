@@ -9,5 +9,5 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface SubjectRepository extends JpaRepository<Subject,Long> {
-    Subject findBySubjectName(String subjectName);
+    boolean existsBySubjectName(String subjectName);
 }

@@ -1,10 +1,13 @@
 package com.jasu.loginregister.Model.Dto.BasicDto;
 
+import com.jasu.loginregister.Entity.Achievement;
+import com.jasu.loginregister.Entity.School;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -14,11 +17,11 @@ public class TutorDto {
 
     private String literacy;
 
-    private List<SchoolDto> listSchool;
+    private Set<SchoolDto> listSchool;
 
     private float experience;
 
-    private List<AchievementDto> listAchievement;
+    private Set<AchievementDto> listAchievement;
 
     private float assessment;
 

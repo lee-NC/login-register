@@ -27,10 +27,10 @@ public class Tutor extends BaseEntity {
     @Column(nullable = false)
     private int numAssessment;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "tutor")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "tutor",orphanRemoval = true)
     private List<Achievement> achievements;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "tutor")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "tutor",orphanRemoval = true)
     private List<School> schools;
 
 

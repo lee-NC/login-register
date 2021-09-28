@@ -1,4 +1,4 @@
-package com.jasu.loginregister.Model.Request;
+package com.jasu.loginregister.Model.Request.CreatedToUser;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -19,14 +19,16 @@ public class CreateAddressRequest {
     @NotNull(message = "addressDetail is required")
     @NotEmpty(message = "addressDetail is required")
     @ApiModelProperty(
-            example="SN XX, duong XX",
+            example="SN XX",
             notes="Password can't be empty",
             required=true
     )
     private String addressDetail;
 
+    @NotNull(message = "ward is required")
+    @NotEmpty(message = "ward is required")
     @ApiModelProperty(
-            example="Dich Vong Hau",
+            example="Cau Dien",
             notes="ward can't be empty"
     )
     private String ward;

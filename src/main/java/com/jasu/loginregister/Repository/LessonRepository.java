@@ -9,4 +9,5 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface LessonRepository extends JpaRepository<Lesson,Long> {
+    boolean existsByBeginTimeAndEndTimeAndDayOfWeek(String beginTime, String endTime, String dayOfWeek);
 }

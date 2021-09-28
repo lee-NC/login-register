@@ -29,4 +29,49 @@ public class LessonServiceImpl implements LessonService {
             System.out.println(e.getMessage());
         }
     }
+
+    @Override
+    public Lesson findById(Long id) {
+        Optional<Lesson> lesson = lessonRepository.findById(id);
+        if (!lesson.isPresent()) {
+            throw new NotFoundException("No lesson found");
+
+        }
+        return lesson.get();
+    }
+
+    @Override
+    public void updateLesson(Lesson lesson) {
+        try {
+            lessonRepository.saveAndFlush(lesson);
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @Override
+    public void createLesson(Lesson lesson) {
+        try {
+            lessonRepository.saveAndFlush(lesson);
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteLesson(Lesson lesson) {
+        try {
+            lessonRepository.delete(lesson);
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean existedByBeginTimeAndEndTimeAndDayOfWeek(String beginTime, String endTime, String dayOfWeek) {
+        return lessonRepository.existsByBeginTimeAndEndTimeAndDayOfWeek(beginTime, endTime, dayOfWeek);
+    }
 }

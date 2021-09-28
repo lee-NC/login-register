@@ -78,9 +78,9 @@ public class StudentController {
 
         Boolean checkTimes = classStudentService.checkRecentClassStudent(userCreateId,STATE_CREATE);
 
-        Subject checkSubject = subjectService.checkBySubjectName(createClassroomRequest.getSubject());
 
-        if (checkTimes && checkSubject!=null
+        if (checkTimes
+                && subjectService.existBySubjectName(createClassroomRequest.getSubject())
                 && student.getGrade() == createClassroomRequest.getGrade()){
             User checkUser = userService.findByID(userCreateId);
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.STUDENT.getAuthority(), userCreateId);
@@ -335,32 +335,6 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.OK).body(result);
         }
         return ResponseEntity.ok("No tutor found");
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('STUDENT')")
-    @Secured("STUDENT")
-    public ResponseEntity<?> getStudentById(@PathVariable("id") Long userId) {
-        log.info("get student by Id in Controller");
-        User user = userService.findByID(userId);
-        Student student = studentService.findByUserId(userId);
-        return ResponseEntity.ok(UserMapper.toStudentDetailDto(student,user));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('STUDENT')")
-    @Secured("STUDENT")
-    public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long id) {
-        User user = userService.updateDetailUser(req, id);
-        Student updateStudent = null;
-        if (req.getUpdateStudentRequest()!=null){
-            Student student = studentService.findByUserId(id);
-            if (req.getUpdateStudentRequest().getGrade()>0&&req.getUpdateStudentRequest().getGrade()<13){
-                student.setGrade(req.getUpdateStudentRequest().getGrade());
-            }
-            updateStudent = studentService.updateStudent(student);
-        }
-        return ResponseEntity.ok(UserMapper.toStudentDetailDto(updateStudent,user));
     }
 
 }

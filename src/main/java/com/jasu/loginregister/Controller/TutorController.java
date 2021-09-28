@@ -81,9 +81,9 @@ public class TutorController {
 
         Boolean checkTimes = classTutorService.checkRecentClassTutor(userCreatedId,STATE_CREATE);
 
-        Subject checkSubject = subjectService.checkBySubjectName(createClassroomRequest.getSubject());
 
-        if (checkTimes && checkSubject!=null){
+        if (checkTimes
+                && subjectService.existBySubjectName(createClassroomRequest.getSubject())){
             User checkUser = userService.findByID(userCreatedId);
             ClassDto classDto = classroomService.createClassroom(createClassroomRequest, DeRole.TUTOR.getAuthority(), userCreatedId);
             classTutorService.createClassroomTutor(userCreatedId,classDto.getId(),STATE_CREATE);
@@ -338,107 +338,6 @@ public class TutorController {
         }
         return ResponseEntity.ok("No student found");
 
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER')")
-    @Secured("USER")
-    public ResponseEntity<?> getTutorById(@PathVariable("id") Long userId) {
-        log.info("get tutor by Id in Controller");
-        Tutor tutor = tutorService.findByUserId(userId);
-        User user = userService.findByID(userId);
-        return ResponseEntity.ok(UserMapper.toTutorDetailDto(tutor,user));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('TUTOR')")
-    @Secured("TUTOR")
-    public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long id) {
-        User user = userService.updateDetailUser(req, id);
-        Tutor updateTutor = null;
-        if (req.getUpdateTutorRequest()!=null){
-            Tutor tutor = tutorService.findByUserId(id);
-            updateTutor = tutorService.updateTutor(updateTutor(tutor,req.getUpdateTutorRequest()));
-        }
-        return ResponseEntity.ok(UserMapper.toTutorDetailDto(updateTutor,user));
-    }
-
-    private Tutor updateTutor(Tutor checkTutor, UpdateTutorRequest updateTutorRequest){
-
-        if (updateTutorRequest.getExperience()!=0f){
-            checkTutor.setExperience(updateTutorRequest.getExperience());
-        }
-
-        if (updateTutorRequest.getLiteracy()!=null){
-            checkTutor.setLiteracy(updateTutorRequest.getLiteracy());
-        }
-
-        if (updateTutorRequest.getListTutorAchievement()!=null){
-            List<Achievement> achievementList= checkTutor.getAchievements();
-            checkTutor.setAchievements(updateListAchievement(achievementList,updateTutorRequest));
-        }
-
-        if (updateTutorRequest.getListTutorSchool()!=null){
-            List<School> schoolList = checkTutor.getSchools();
-            checkTutor.setSchools(updateListSchool(schoolList,updateTutorRequest));
-        }
-        return checkTutor;
-    }
-
-    private List<Achievement> updateListAchievement(List<Achievement>achievementList, UpdateTutorRequest updateTutorRequest){
-        int count =0;
-        if (achievementList.size()<=updateTutorRequest.getListTutorAchievement().size()){
-            count = achievementList.size();
-            for (int i=count;i<updateTutorRequest.getListTutorAchievement().size();i++){
-                if (updateTutorRequest.getListTutorAchievement().get(i).getAchievement()!=null
-                        &&updateTutorRequest.getListTutorAchievement().get(i).getYear()>YEAR_ACHIEVEMENT){
-                    Achievement achievement = new Achievement(updateTutorRequest.getListTutorAchievement().get(i).getAchievement()
-                            ,updateTutorRequest.getListTutorAchievement().get(i).getYear());
-                    achievementList.add(achievement);
-                }
-            }
-        }
-        else  {
-            count = updateTutorRequest.getListTutorAchievement().size();
-            for (int i=count;i<updateTutorRequest.getListTutorAchievement().size();i++){
-                achievementList.remove(i);
-            }
-        }
-        for (int i = 0;i<count;i++){
-            if (updateTutorRequest.getListTutorAchievement().get(i).getAchievement()!=null){
-                achievementList.get(i).setAchievement(updateTutorRequest.getListTutorAchievement().get(i).getAchievement());
-            }
-            if (updateTutorRequest.getListTutorAchievement().get(i).getYear()!=0){
-                achievementList.get(i).setYear(updateTutorRequest.getListTutorAchievement().get(i).getYear());
-            }
-        }
-        return achievementList;
-    }
-
-    private List<School> updateListSchool(List<School> schoolList,UpdateTutorRequest updateTutorRequest){
-        int count =0;
-        if (schoolList.size()<=updateTutorRequest.getListTutorSchool().size()){
-            count = schoolList.size();
-            for (int i=count;i<updateTutorRequest.getListTutorSchool().size();i++){
-                if (updateTutorRequest.getListTutorSchool().get(i).getSchoolName()!=null){
-                    School school = new School(updateTutorRequest.getListTutorSchool().get(i).getSchoolName());
-                    schoolList.add(school);
-
-                }
-            }
-        }
-        else {
-            count = updateTutorRequest.getListTutorSchool().size();
-            for (int i=count;i<updateTutorRequest.getListTutorSchool().size();i++){
-                schoolList.remove(i);
-            }
-        }
-        for (int i = 0;i<count;i++){
-            if (updateTutorRequest.getListTutorSchool().get(i).getSchoolName()!=null){
-                schoolList.get(i).setSchoolName(updateTutorRequest.getListTutorSchool().get(i).getSchoolName());
-            }
-        }
-        return schoolList;
     }
 
 }

@@ -19,15 +19,9 @@ public class UpdateTutorRequest {
     )
     private String literacy;
 
-
-    private List<SchoolRequest> listTutorSchool;
-
-
     @ApiModelProperty(
             example="2.5",
             notes="Fill your experience years you have"
     )
     private float experience;
-
-    private List<AchievementRequest> listTutorAchievement;
 }

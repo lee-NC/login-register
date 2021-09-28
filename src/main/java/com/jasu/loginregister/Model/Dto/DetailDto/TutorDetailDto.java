@@ -5,20 +5,18 @@ import com.jasu.loginregister.Model.Dto.BasicDto.SchoolDto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
 public class TutorDetailDto {
 
-    private UserDetailDto userDetailDto;
-
     private String literacy;
 
-    private List<SchoolDto> listSchool;
+    private Set<SchoolDto> listSchool;
 
-    private String experience;
+    private float experience;
 
-    private List<AchievementDto> listAchievement;
+    private Set<AchievementDto> listAchievement;
 }

@@ -15,13 +15,9 @@ public class SubjectServiceImpl implements SubjectService {
     @Autowired
     private SubjectRepository subjectRepository;
 
+
     @Override
-    public Subject checkBySubjectName(String subject) {
-        log.info("Check subject name is "+subject);
-        Subject checkSubject = subjectRepository.findBySubjectName(subject);
-        if (checkSubject==null){
-            throw new NotFoundException("No subject found ");
-        }
-        return checkSubject;
+    public boolean existBySubjectName(String subjectName) {
+        return subjectRepository.existsBySubjectName(subjectName);
     }
 }

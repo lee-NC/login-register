@@ -1,16 +1,13 @@
 package com.jasu.loginregister.ServiceImplement;
 
 import com.jasu.loginregister.Email.EmailService;
-import com.jasu.loginregister.Entity.Address;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.DuplicateRecordException;
 import com.jasu.loginregister.Exception.ForbiddenException;
-import com.jasu.loginregister.Exception.InternalServerException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Dto.BasicDto.UserDto;
+import com.jasu.loginregister.Model.Mapper.UserDetailMapper;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
-import com.jasu.loginregister.Model.Request.CreateAddressRequest;
-import com.jasu.loginregister.Model.Request.CreatedToUser.CreateUserRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
 import com.jasu.loginregister.Repository.UserRepository;
 import com.jasu.loginregister.Service.UserService;
@@ -18,12 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -44,8 +37,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailService emailService;
 
-    private static String UPLOAD_DIR = System.getProperty("user.home") + "/upload";
-
     @Override
     public UserDto createUser(User user) {
         // Check email exist
@@ -61,73 +52,13 @@ public class UserServiceImpl implements UserService {
         if (!user.isPresent()){
             throw new NotFoundException("No user found");
         }
-        if (req.getCreateAddressRequest()!=null){
-            Address address = checkAddress(req.getCreateAddressRequest());
-            user.get().setAddress(address);
-        }
-        if (req.getBirthday()!=null){
-            SimpleDateFormat formatterDate = new SimpleDateFormat("dd/MM/yyyy");
-            user.get().setBirthday(formatterDate.format(req.getBirthday()));
-        }
-        if (req.getGender()!=null){
-            user.get().setGender(req.getGender());
-        }
-
-        if (req.getFullName()!=null){
-            user.get().setFullName(req.getFullName());
-        }
-
-        if (req.getAvatar()!=null){
-
-            // Create folder to save file if not exist
-            File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-
-            MultipartFile fileData = req.getAvatar();
-            String name = fileData.getOriginalFilename() + user.get().getEmail();
-            if (name != null && name.length() > 0) {
-                try {
-                    // Create file
-                    String path = UPLOAD_DIR + "/" + name;
-                    File serverFile = new File(path);
-                    BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(serverFile));
-                    stream.write(fileData.getBytes());
-                    stream.close();
-                    user.get().setAvatar(path);
-                } catch (Exception e) {
-                    throw new InternalServerException("Error when uploading");
-                }
-            }
-        }
         User saveUser = new User();
         try {
-            saveUser = userRepository.saveAndFlush(user.get());
+            saveUser = userRepository.saveAndFlush(UserDetailMapper.toUser(user.get(),req));
         }catch (Exception e){
             System.out.println(e.getMessage());
         }
         return saveUser;
-    }
-
-    private Address checkAddress(CreateAddressRequest req) {
-        Address address = new Address();
-        if (!req.getAddressDetail().isEmpty()){
-            address.setAddressDetail(req.getAddressDetail());
-        }
-        if (!req.getWard().isEmpty()){
-            address.setWard(req.getWard());
-        }
-        if (!req.getDistrict().isEmpty()){
-            address.setDistrict(req.getDistrict());
-        }
-        if (!req.getPhoneNumber().isEmpty()){
-            address.setPhoneNumber(req.getPhoneNumber());
-        }
-        if (!req.getProvince().isEmpty()){
-            address.setProvince(req.getProvince());
-        }
-        return address;
     }
 
     @Override

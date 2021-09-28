@@ -1,7 +1,7 @@
 package com.jasu.loginregister.Model.Request.CreatedToUser;
 
-import com.jasu.loginregister.Entity.Address;
-import com.jasu.loginregister.Model.Request.CreateAddressRequest;
+import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateStudentRequest;
+import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateTutorRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -73,5 +73,9 @@ public class CreateUserRequest {
             required=true
     )
     private String password;
+
+    private UpdateTutorRequest updateTutorRequest;
+
+    private UpdateStudentRequest updateStudentRequest;
 
 }

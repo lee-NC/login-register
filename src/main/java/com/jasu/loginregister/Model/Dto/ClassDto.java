@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -29,5 +30,7 @@ public class ClassDto {
     private String beginDay;
 
     private String subject;
+
+    private Set<Lesson> lessonList;
 
 }

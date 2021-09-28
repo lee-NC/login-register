@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -79,7 +80,7 @@ public class CreateClassroomRequest {
     )
     private Long fee;
 
-    private List<LessonRequest> listLesson;
+    private Set<LessonRequest> listLesson;
 
     @NotNull(message = "Begin day is required")
     @ApiModelProperty(

@@ -9,6 +9,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -34,7 +35,7 @@ public class CreateTutorRequest {
     private String literacy;
 
 
-    private List<SchoolRequest> listTutorSchool;
+    private Set<SchoolRequest> listTutorSchool;
 
 
     @ApiModelProperty(
@@ -44,5 +45,5 @@ public class CreateTutorRequest {
     private float experience;
 
 
-    private List<AchievementRequest> listTutorAchievement;
+    private Set<AchievementRequest> listTutorAchievement;
 }

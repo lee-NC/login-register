@@ -7,7 +7,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class StudentDetailDto {
 
-    private  UserDetailDto userDetailDto;
-
     private int grade;
 }

@@ -35,12 +35,4 @@ public class Address {
     @Column(nullable = false,length = 12)
     private String phoneNumber;
 
-    public Address(User user, String addressDetail, String ward, String district, String province, String phoneNumber) {
-        this.user = user;
-        this.addressDetail = addressDetail;
-        this.ward = ward;
-        this.district = district;
-        this.province = province;
-        this.phoneNumber = phoneNumber;
-    }
 }

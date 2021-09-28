@@ -1,15 +1,13 @@
 package com.jasu.loginregister.Model.Request.UpdateToUser;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jasu.loginregister.Model.Request.CreateAddressRequest;
+import com.jasu.loginregister.Model.Request.CreatedToUser.CreateAddressRequest;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.URL;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.util.Date;
 
