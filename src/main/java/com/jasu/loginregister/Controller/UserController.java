@@ -140,18 +140,18 @@ public class UserController {
         Student student = null;
         Tutor tutor = null;
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
-            tutor = tutorService.findByUserId(userId);
-            for (Achievement achievement:tutor.getAchievements()) {
-                if (achievement.getId()==req.getId()){
-                    if (req.getAchievement()!=null&&!achievement.getAchievement().equals(req.getAchievement())){
-                        achievement.setAchievement(req.getAchievement());
-                    }
-                    if (req.getYear()>YEAR_ACHIEVEMENT&&achievement.getYear()!= req.getYear()){
-                        achievement.setYear(req.getYear());
-                    }
-                    tutor.getAchievements().add(achievement);
-                    tutorService.updateTutor(tutor);
+            Achievement achievement = achievementService.findById(req.getId());
+            if (achievement.getTutor().getUserTutorId()==userId){
+                if (req.getAchievement()!=null&&!achievement.getAchievement().equals(req.getAchievement())){
+                    achievement.setAchievement(req.getAchievement());
                 }
+                if (req.getYear()>YEAR_ACHIEVEMENT&&achievement.getYear()!= req.getYear()){
+                    achievement.setYear(req.getYear());
+                }
+                achievementService.checkExist(achievement);
+            }
+            else {
+                return ResponseEntity.badRequest().body("No achievement found");
             }
             tutor = tutorService.findByUserId(userId);
         }
@@ -174,10 +174,11 @@ public class UserController {
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
             Achievement achievement = new Achievement(tutor,req.getAchievement(),req.getYear());
-            achievement.setTutor(tutor);
-            tutor.getAchievements().add(achievement);
-            tutorService.updateTutor(tutor);
-            tutor = tutorService.findByUserId(userId);
+            if(achievementService.checkExist(achievement)){
+                tutor.getAchievements().add(achievement);
+                tutorService.updateTutor(tutor);
+                tutor = tutorService.findByUserId(userId);
+            }
         }
         else {
             return ResponseEntity.badRequest().body("No tutor found");
@@ -231,6 +232,7 @@ public class UserController {
                 if (req.getSchoolName()!=null&&!req.getSchoolName().equalsIgnoreCase(school.getSchoolName())){
                     school.setSchoolName(req.getSchoolName());
                 }
+                schoolService.checkExist(school);
             }
             else {
                 return ResponseEntity.badRequest().body("No school found");
@@ -258,9 +260,11 @@ public class UserController {
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
             School school = new School(tutor,req.getSchoolName());
-            tutor = tutorService.findByUserId(userId);
-            tutor.getSchools().add(school);
-            tutorService.updateTutor(tutor);
+            if(schoolService.checkExist(school)){
+                tutor.getSchools().add(school);
+                tutorService.updateTutor(tutor);
+                tutor = tutorService.findByUserId(userId);
+            }
         }else {
             return ResponseEntity.badRequest().body("No tutor found");
         }

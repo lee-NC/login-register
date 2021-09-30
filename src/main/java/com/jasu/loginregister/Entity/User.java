@@ -53,6 +53,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private int numActive;
 
+    @Column(name = "enabled",columnDefinition = "0")
+    private boolean enabled;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(	name = "jasu_user_roles",
             joinColumns = @JoinColumn(name = "user_ur_id"),

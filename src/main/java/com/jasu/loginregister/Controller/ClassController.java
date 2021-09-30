@@ -199,6 +199,10 @@ public class ClassController {
                 if (req.getDayOfWeek()!=null&&!req.getDayOfWeek().equals(lesson.getDayOfWeek())){
                     lesson.setDayOfWeek(req.getDayOfWeek().toUpperCase(Locale.ROOT));
                 }
+
+                if(!lessonService.checkExist(classId,lesson)){
+                    return ResponseEntity.badRequest().body("Lesson is existed");
+                }
                 classroomService.updateClassroom(result);
                 ClassDto classDto = ClassMapper.toClassDto(classroomService.findById(classId));
                 return ResponseEntity.ok(classDto);
@@ -213,6 +217,9 @@ public class ClassController {
     public ResponseEntity<?> createLesson(@Valid @RequestBody LessonRequest req, @PathVariable("id") Long classId) {
         Classroom result = classroomService.findById(classId);
         Lesson lesson = new Lesson(req.getBeginTime(),req.getEndTime(),req.getDayOfWeek());
+        if(!lessonService.checkExist(classId,lesson)){
+            return ResponseEntity.badRequest().body("Lesson is existed");
+        }
         result.getLesson().add(lesson);
         classroomService.updateClassroom(result);
         ClassDto classDto = ClassMapper.toClassDto(classroomService.findById(classId));

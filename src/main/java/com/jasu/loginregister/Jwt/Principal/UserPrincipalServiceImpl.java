@@ -23,7 +23,6 @@ public class UserPrincipalServiceImpl implements UserDetailsService {
       throw new UsernameNotFoundException("User Not Found with username: " + username);
     }
     UserPrincipal userPrincipal = UserMapper.toUserPrincipal(user);
-    userPrincipal.setUsername(user.getEmail());
     return userPrincipal;
   }
 

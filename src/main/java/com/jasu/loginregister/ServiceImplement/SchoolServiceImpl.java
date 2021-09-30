@@ -3,6 +3,7 @@ package com.jasu.loginregister.ServiceImplement;
 import com.jasu.loginregister.Entity.Achievement;
 import com.jasu.loginregister.Entity.School;
 import com.jasu.loginregister.Entity.Tutor;
+import com.jasu.loginregister.Exception.DuplicateRecordException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Repository.SchoolRepository;
 import com.jasu.loginregister.Service.SchoolService;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -42,4 +44,15 @@ public class SchoolServiceImpl implements SchoolService {
             System.out.println(e.getMessage());
         }
     }
+
+    @Override
+    public boolean checkExist(School school) {
+        log.info("check school exists in Service");
+        boolean checkExist = schoolRepository.existsByTutorAndSchoolName(school.getTutor(), school.getSchoolName());
+        if (checkExist){
+            return false;
+        }
+        return true;
+    }
+
 }

@@ -7,4 +7,6 @@ public interface AchievementService {
 
     void deleteAchievement(Achievement achievement);
 
+    boolean checkExist(Achievement achievement);
+
 }

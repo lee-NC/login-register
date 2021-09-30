@@ -14,12 +14,13 @@ public class UserPrincipal implements UserDetails {
 
     private Collection authorities;
 
+    private boolean enabled;
+
 
     @Override
     public String getPassword() {
         return null;
     }
-
 
     @Override
     public boolean isAccountNonExpired() {
@@ -33,11 +34,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return false;
-    }
-
-    @Override
-    public boolean isEnabled() {
         return false;
     }
 }

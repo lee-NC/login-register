@@ -8,4 +8,7 @@ public interface SchoolService {
 
 
     void deleteSchool(School school);
+
+    boolean checkExist(School school);
+
 }

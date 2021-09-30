@@ -1,26 +1,14 @@
-package com.jasu.loginregister.ScheduleAndTimer;
+package com.jasu.loginregister.ScheduleAndEvent;
 
 import com.jasu.loginregister.Email.EmailService;
-import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Repository.*;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.STATE_CANCELED;
 
 @EnableAsync
 @Component
