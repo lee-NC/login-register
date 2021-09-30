@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -66,7 +67,21 @@ public class UserController {
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
 
+    @GetMapping("/coin/{id}")
+    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
+    @Secured({"STUDENT","TUTOR"})
+    public ResponseEntity<?> getUserCoinById(@PathVariable("id") Long userId, Model model) {
+        log.info("get student by Id in Controller");
+        User user = userService.findByID(userId);
+        model.addAttribute("userId: ",user.getCoin());
+        model.addAttribute("numActive: ",user.getNumActive());
+        model.addAttribute("coin: ",user.getCoin());
+        return ResponseEntity.ok(model);
+    }
+
     @GetMapping("/avatar/{filename}")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    @Secured({"USER"})
     public ResponseEntity<?> download(@PathVariable String filename) {
         File file = new File(UPLOAD_DIR + "/" + filename);
         if (!file.exists()) {

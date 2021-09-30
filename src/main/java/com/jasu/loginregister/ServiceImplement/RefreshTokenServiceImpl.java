@@ -56,10 +56,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   public boolean verifyExpiration(RefreshToken token) {
-    if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+    User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
+    if (token.getExpiryDate().compareTo(Instant.now()) < 0||user.getState().equals("LOGOUT")) {
       token.setDeleted(true);
       refreshTokenRepository.saveAndFlush(token);
-      User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
       user.setState("LOGOUT");
       userRepository.saveAndFlush(user);
       return false;

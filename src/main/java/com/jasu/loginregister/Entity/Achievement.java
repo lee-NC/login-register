@@ -28,10 +28,10 @@ public class Achievement {
     @Column()
     private int year;
 
-    public Achievement(String achievement,int year) {
-        this.achievement = achievement;
-        this.year = year;
-    }
+//    public Achievement(String achievement,int year) {
+//        this.achievement = achievement;
+//        this.year = year;
+//    }
 
     public Achievement(Tutor tutor, String achievement, int year) {
         this.tutor = tutor;

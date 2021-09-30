@@ -53,7 +53,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private int numActive;
 
-    @Column(name = "enabled",columnDefinition = "0")
+    @Column(name = "enabled")
     private boolean enabled;
 
     @ManyToMany(fetch = FetchType.LAZY)

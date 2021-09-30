@@ -72,7 +72,7 @@ public class PublicController {
             String token = jwtUtils.generateTokenFromUsername(refreshToken.getUser().getEmail());
             return ResponseEntity.ok("accessToken: "+token);
         }
-        return ResponseEntity.badRequest().body(new ForbiddenException("Refresh token was expired. Please make a new login request"));
+        return ResponseEntity.badRequest().body("Refresh token was expired. Please make a new login request");
     }
 
     @PutMapping("/logout/{id}")
