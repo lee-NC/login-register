@@ -1,6 +1,7 @@
 package com.jasu.loginregister.ServiceImplement;
 
 import com.jasu.loginregister.Entity.Classroom;
+import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.InternalServerException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Dto.ClassDto;
@@ -104,11 +105,25 @@ public class ClassroomServiceImpl implements ClassroomService {
 
         return classroomRepository.findAll(pageable);
     }
+
+    @Override
+    public List<ClassDto> suggestClass(User user,int grade) {
+        List<Classroom> classroomList = new ArrayList<>();
+        classroomList = classroomRepository.suggestClass(user.getAddress().getProvince(),
+                user.getAddress().getDistrict(),grade);
+        if (classroomList.isEmpty()) {
+            classroomList = classroomRepository.findAllByState("WAITING");
+        }
+        List<ClassDto> result = new ArrayList<>();
+        for (Classroom classroom : classroomList) {
+            result.add(ClassMapper.toClassDto(classroom));
+        }
+        return result;
+    }
+
     @Override
     public List<ClassDto> searchClass(String keyWord) {
         log.info("student Search Classroom in Service");
-
-        Pageable pageable = PageRequest.of(0,10);
 
         List<Classroom> classroomList = new ArrayList<>();
         if (!keyWord.isEmpty()) {

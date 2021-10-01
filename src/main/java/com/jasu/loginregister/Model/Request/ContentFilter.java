@@ -11,14 +11,16 @@ public class ContentFilter {
     @NotNull(message = "field is required")
     @ApiModelProperty(
             example="3",
-            notes="field cannot be empty"
+            notes="field cannot be empty",
+            required = true
     )
     private String field;
 
     @NotNull(message = "keyWord is required")
     @ApiModelProperty(
             example="3",
-            notes="keyWord cannot be empty"
+            notes="keyWord cannot be empty",
+            required = true
     )
     private String keyWord;
 }

@@ -67,6 +67,12 @@ public class DEStateMessage {
     //Define email body
     public static final String VERIFICATION_CONTENT = "Verifying that you registry with us.";
 
+//    public static String VERIFICATION_CONTENT = "Dear [[name]],<br>"
+//            + "Please click the link below to verify your registration:<br>"
+//            + "<h3><a href=\"[[URL]]\" target=\"_self\">VERIFY</a></h3>"
+//            + "Thank you,<br>"
+//            + "JASU Team.";
+
     public static final String WELCOME_CONTENT = "Welcome to JASU!!\n" +
             "JASU is a network of connections between students and tutors," +
             " where you can choose the right tutor without the middleman.\n" +

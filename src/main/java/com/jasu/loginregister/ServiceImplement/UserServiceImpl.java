@@ -116,6 +116,20 @@ public class UserServiceImpl implements UserService {
         return result;
     }
 
+//    @Override
+//    public boolean verifyUser(String code) {
+//        User user = userRepository.findByVerificationCode(code);
+//
+//        if (user == null || user.isEnabled()) {
+//            return false;
+//        } else {
+//            user.setVerificationCode(null);
+//            user.setEnabled(true);
+//            userRepository.saveAndFlush(user);
+//            return true;
+//        }
+//    }
+
     @Override
     public User loginWithEmailAndPassword(String email, String password) {
         log.info("Login in Service");

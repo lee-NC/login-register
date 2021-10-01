@@ -18,10 +18,10 @@ public class User extends BaseEntity {
         super(id);
     }
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String fullName;
 
-    @Column(nullable = false,unique = true)
+    @Column(nullable = false, length = 40, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -33,6 +33,7 @@ public class User extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "user")
     private Address address;
 
+    @Column(length = 11)
     private String birthday;
 
     @Column(nullable = false)
@@ -53,8 +54,11 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private int numActive;
 
-    @Column(name = "enabled")
-    private boolean enabled;
+//    @Column(name = "enabled")
+//    private boolean enabled;
+//
+//    @Column(name = "verification_code", length = 64)
+//    private String verificationCode;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(	name = "jasu_user_roles",

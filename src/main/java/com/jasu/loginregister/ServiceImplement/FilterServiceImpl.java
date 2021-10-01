@@ -34,7 +34,7 @@ public class FilterServiceImpl implements FilterService {
                 "INNER JOIN jasu_tutor ON jasu_classroom.created_by = CAST(jasu_tutor.user_tutor_id AS CHAR) " +
                 "INNER JOIN jasu_user ON jasu_tutor.user_tutor_id = jasu_user.id " +
                 "INNER JOIN jasu_address ON jasu_user.id = jasu_address.user_id " +
-                "WHERE ";
+                "WHERE jasu_classroom.state = 'WAITING' AND ";
         for (ContentFilter contentFilter:contentFilters) {
             switch (contentFilter.getField()){
                 case "address":{
@@ -77,7 +77,7 @@ public class FilterServiceImpl implements FilterService {
         else query = query.substring(0,query.length()-7);
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> resultList = q.getResultList();
-        if (resultList==null) {
+        if (resultList.isEmpty()) {
             throw new NotFoundException("No class found");
         }
         resultList.stream().forEach((objects -> {

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,4 +30,16 @@ public interface ClassroomRepository extends JpaRepository<Classroom,Long> {
             countQuery = "SELECT count(*) FROM jasu_classroom",
             nativeQuery = true)
     List<Classroom> searchClassFullText(String keyword);
+
+    @Query(value = "SELECT * FROM jasu_classroom " +
+            "INNER JOIN jasu_user ON jasu_classroom.created_by=jasu_user.id "+
+            "INNER JOIN jasu_address ON jasu_user.id = jasu_address.user_id " +
+            "WHERE  jasu_address.province = :province " +
+            "AND jasu_address.district = :district " +
+            "AND jasu_classroom.grade<= :grade " +
+            "AND jasu_classroom.state='WAITING'",
+            nativeQuery = true)
+    List<Classroom> suggestClass(@Param("province") String province,
+                                 @Param("district") String district,
+                                 @Param("grade") int grade);
 }

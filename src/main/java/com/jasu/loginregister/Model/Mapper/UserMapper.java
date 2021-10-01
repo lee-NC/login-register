@@ -5,6 +5,7 @@ import com.jasu.loginregister.Model.Dto.BasicDto.*;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
 import com.jasu.loginregister.Model.Request.CreatedToUser.CreateAddressRequest;
 import com.jasu.loginregister.Model.Request.CreatedToUser.*;
+import net.bytebuddy.utility.RandomString;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.text.SimpleDateFormat;
@@ -16,7 +17,7 @@ public class UserMapper {
         UserPrincipal tmp = new UserPrincipal();
         tmp.setId(user.getId());
         tmp.setUsername(user.getEmail());
-        tmp.setEnabled(user.isEnabled());
+//        tmp.setEnabled(user.isEnabled());
         return tmp;
     }
 
@@ -57,6 +58,10 @@ public class UserMapper {
         Date date = new Date();
         Address address = toAddress(req.getCreateAddressRequest());
         User user = new User();
+
+//        String randomCode = RandomString.make(64);
+//        user.setVerificationCode(randomCode);
+//        user.setEnabled(false);
 
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());

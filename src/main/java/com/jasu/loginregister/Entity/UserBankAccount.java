@@ -21,6 +21,7 @@ public class UserBankAccount extends BaseEntity {
     @Column(nullable = false)
     private String typeBankAccount;
 
+
     public UserBankAccount(Long accountId, Long userAccountId, String typeBankAccount) {
         this.accountId = accountId;
         this.userAccountId = userAccountId;

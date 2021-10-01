@@ -49,7 +49,6 @@ public class UserController {
     @Autowired
     private SchoolService schoolService;
 
-
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
     @Secured({"STUDENT","TUTOR"})
@@ -317,4 +316,7 @@ public class UserController {
         }
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
     }
+
+
+
 }

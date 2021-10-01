@@ -15,12 +15,15 @@ import com.jasu.loginregister.Model.Request.CreatedToUser.*;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,7 +32,7 @@ import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 @RestController
 @Slf4j
 @RequestMapping("/registry")
-public class RegistryCotroller {
+public class RegistryController {
 
     @Autowired
     private UserService userService;
@@ -70,14 +73,38 @@ public class RegistryCotroller {
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
         String jwt = jwtUtils.generateJwtToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+//        try {
+//            sendVerificationEmail(checkUser, "http://localhost:8080/");
+//        } catch (MessagingException e) {
+//            e.printStackTrace();
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
         emailService.sendAnEmail(checkUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
 
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
                 checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
+//    private void sendVerificationEmail(User user, String siteURL)
+//            throws MessagingException, UnsupportedEncodingException {
+//        String verifyURL = siteURL + "/verify?code=" + user.getVerificationCode();
+//        VERIFICATION_CONTENT = VERIFICATION_CONTENT.replace("[[name]]",user.getFullName());
+//        VERIFICATION_CONTENT = VERIFICATION_CONTENT.replace("[[URL]]",verifyURL);
+//        emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+//    }
+
+//    @GetMapping("/verify")
+//    public ResponseEntity<?> verifyUser(@Param("code") String code) {
+//        if (userService.verifyUser(code)) {
+//            return ResponseEntity.ok("Verify successfully");
+//        } else {
+//            return ResponseEntity.badRequest().body("Verify unsuccessfully");
+//        }
+//    }
+
+
     @PostMapping("/tutor")
-    @Secured("USER")
     public ResponseEntity<?> registryTuTor(@Valid @RequestBody CreateTutorRequest createTutorRequest){
         log.info("Registry Tutor in Controller");
         User checkUser = userService.findByID(createTutorRequest.getUserId());

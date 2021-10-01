@@ -64,6 +64,9 @@ public class ClassController {
     @Autowired
     private LessonService lessonService;
 
+    @Autowired
+    private UserRoleService userRoleService;
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('USER')")
     @Secured("USER")
@@ -120,7 +123,7 @@ public class ClassController {
         return ResponseEntity.ok(model);
     }
 
-    @GetMapping("/filter")
+    @PostMapping("/filter")
     @PreAuthorize("hasAnyAuthority('USER')")
     @Secured("USER")
     public ResponseEntity<?> filterClass(@Valid @RequestBody FilterRequest filterRequest) {
@@ -131,6 +134,23 @@ public class ClassController {
         }
         List<ClassDto> classroomList = filterService.filterClass(contentFilters);
         return ResponseEntity.ok(classroomList);
+    }
+
+    @GetMapping("/suggest/{id}")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    @Secured("USER")
+    public ResponseEntity<?> suggestClass(@PathVariable("id") Long userId, Model model) {
+        log.info("Suggest class in Controller");
+        User checkUser = userService.findByID(userId);
+        int grade = 12;
+        if (userRoleService.existUserRole(checkUser.getId(), DeRole.STUDENT.getAuthority())){
+            Student student = studentService.findByUserId(userId);
+            grade = student.getGrade();
+        }
+        List<ClassDto> classroomList = classroomService.suggestClass(checkUser,grade);
+        model.addAttribute("listClass", classroomList);
+        model.addAttribute("userId",userId);
+        return ResponseEntity.ok(model);
     }
 
     @PutMapping("/{id}")

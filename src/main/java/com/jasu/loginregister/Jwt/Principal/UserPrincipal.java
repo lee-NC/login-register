@@ -14,7 +14,7 @@ public class UserPrincipal implements UserDetails {
 
     private Collection authorities;
 
-    private boolean enabled;
+//    private boolean enabled;
 
 
     @Override
@@ -34,6 +34,11 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isCredentialsNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled() {
         return false;
     }
 }
