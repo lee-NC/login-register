@@ -16,7 +16,6 @@ public class UserMapper {
     public static UserPrincipal toUserPrincipal(User user) {
         UserPrincipal tmp = new UserPrincipal();
         tmp.setId(user.getId());
-        tmp.setUsername(user.getEmail());
 //        tmp.setEnabled(user.isEnabled());
         return tmp;
     }

@@ -1,11 +1,9 @@
-package com.jasu.loginregister.ServiceImplement;
+package com.jasu.loginregister.Filter;
 
-import com.jasu.loginregister.Entity.Classroom;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Dto.ClassDto;
 import com.jasu.loginregister.Model.Request.ContentFilter;
-import com.jasu.loginregister.Repository.ClassroomRepository;
-import com.jasu.loginregister.Service.FilterService;
+import com.jasu.loginregister.Filter.FilterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

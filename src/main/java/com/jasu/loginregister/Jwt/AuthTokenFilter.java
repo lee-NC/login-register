@@ -1,9 +1,11 @@
 package com.jasu.loginregister.Jwt;
 
+import com.jasu.loginregister.Entity.AccessToken;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Entity.UserRole;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipalServiceImpl;
+import com.jasu.loginregister.Service.AccessTokenService;
 import com.jasu.loginregister.Service.UserRoleService;
 import com.jasu.loginregister.Service.UserService;
 import org.slf4j.Logger;
@@ -34,7 +36,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
   private UserRoleService userRoleService;
 
   @Autowired
-  private UserService userService;
+  private AccessTokenService accessTokenService;
 
   @Autowired
   private UserPrincipalServiceImpl userDetailsService;
@@ -47,20 +49,22 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     try {
       String jwt = parseJwt(request);
       if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-        String username = jwtUtils.getUserNameFromJwtToken(jwt);
-        Set<GrantedAuthority> authorities = new HashSet<>();
+        AccessToken accessToken = accessTokenService.findByToken(jwt);
+        if (accessToken != null){
+          String userId = jwtUtils.getUserIdFromJwtToken(jwt);
+          Set<GrantedAuthority> authorities = new HashSet<>();
+          UserPrincipal userPrincipal = userDetailsService.loadUserById(Long.parseLong(userId));
+          Set<UserRole>userRoles  = userRoleService.getListUserRole(userPrincipal.getId());
+          for (UserRole userRole: userRoles){
+            authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
+          }
 
-        UserPrincipal userPrincipal = userDetailsService.loadUserByUsername(username);
-        Set<UserRole>userRoles  = userRoleService.getListUserRole(userPrincipal.getId());
-        for (UserRole userRole: userRoles){
-          authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
+          UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null,
+                  authorities);
+          authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+          SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null,
-            authorities);
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
       }
     } catch (Exception e) {
       logger.error("Cannot set user authentication: {}", e.getMessage());

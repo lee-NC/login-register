@@ -10,8 +10,6 @@ public class UserPrincipal implements UserDetails {
 
     private Long id;
 
-    private String username;
-
     private Collection authorities;
 
 //    private boolean enabled;
@@ -19,6 +17,11 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getPassword() {
+        return null;
+    }
+
+    @Override
+    public String getUsername() {
         return null;
     }
 

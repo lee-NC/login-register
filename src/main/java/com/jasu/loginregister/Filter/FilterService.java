@@ -1,4 +1,4 @@
-package com.jasu.loginregister.Service;
+package com.jasu.loginregister.Filter;
 
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Model.Dto.ClassDto;

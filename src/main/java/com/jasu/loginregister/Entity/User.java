@@ -54,17 +54,12 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private int numActive;
 
+
 //    @Column(name = "enabled")
 //    private boolean enabled;
 //
 //    @Column(name = "verification_code", length = 64)
 //    private String verificationCode;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(	name = "jasu_user_roles",
-            joinColumns = @JoinColumn(name = "user_ur_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_ur_id"))
-    private Set<Role> roles = new HashSet<>();
 
     public User(String email, String password) {
         this.email = email;

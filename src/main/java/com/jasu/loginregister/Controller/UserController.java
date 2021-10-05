@@ -11,6 +11,7 @@ import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -50,7 +51,7 @@ public class UserController {
     private SchoolService schoolService;
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
+    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"STUDENT","TUTOR"})
     public ResponseEntity<?> getUserById(@PathVariable("id") Long userId) {
         log.info("get student by Id in Controller");
@@ -67,21 +68,21 @@ public class UserController {
     }
 
     @GetMapping("/coin/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
+    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"STUDENT","TUTOR"})
     public ResponseEntity<?> getUserCoinById(@PathVariable("id") Long userId, Model model) {
         log.info("get student by Id in Controller");
         User user = userService.findByID(userId);
-        model.addAttribute("userId: ",user.getCoin());
+        model.addAttribute("userId: ",userId);
         model.addAttribute("numActive: ",user.getNumActive());
         model.addAttribute("coin: ",user.getCoin());
         return ResponseEntity.ok(model);
     }
 
-    @GetMapping("/avatar/{filename}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @GetMapping("/{id}/avatar/{filename}")
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
     @Secured({"USER"})
-    public ResponseEntity<?> download(@PathVariable String filename) {
+    public ResponseEntity<?> download(@Param("filename") String filename, @PathVariable("id") Long userId) {
         File file = new File(UPLOAD_DIR + "/" + filename);
         if (!file.exists()) {
             throw new NotFoundException("File not found");
@@ -107,7 +108,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
+    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"STUDENT","TUTOR"})
     public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long id) {
         User user = userService.updateDetailUser(req, id);
@@ -145,7 +146,7 @@ public class UserController {
     }
 
     @PutMapping("/achievement/{id}")
-    @PreAuthorize("hasAnyAuthority('TUTOR')")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> updateAchievementTutor(@Valid @RequestBody UpdateAchievementRequest req,
                                                     @PathVariable("id") Long userId) {
@@ -177,7 +178,7 @@ public class UserController {
     }
 
     @PostMapping("/achievement/{id}")
-    @PreAuthorize("hasAnyAuthority('TUTOR')")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> createAchievementTutor(@Valid @RequestBody AchievementRequest req,
                                                     @PathVariable("id") Long userId) {
@@ -204,7 +205,7 @@ public class UserController {
     }
 
     @DeleteMapping("/achievement/{id}")
-    @PreAuthorize("hasAnyAuthority('TUTOR')")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> deleteAchievementTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req,
                                                     @PathVariable("id") Long userId) {
@@ -232,7 +233,7 @@ public class UserController {
     }
 
     @PutMapping("/school/{id}")
-    @PreAuthorize("hasAnyAuthority('TUTOR')")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> updateSchoolTutor(@Valid @RequestBody UpdateSchoolRequest req,
                                                @PathVariable("id") Long userId) {
@@ -262,7 +263,7 @@ public class UserController {
     }
 
     @PostMapping("/school/{id}")
-    @PreAuthorize("hasAnyAuthority('TUTOR')")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> createSchoolTutor(@Valid @RequestBody SchoolRequest req,
                                                @PathVariable("id") Long userId) {
@@ -289,7 +290,7 @@ public class UserController {
     }
 
     @DeleteMapping("/school/{id}")
-    @PreAuthorize("hasAnyAuthority('TUTOR')")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> deleteSchoolTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req,
                                                @PathVariable("id") Long userId) {

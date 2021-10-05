@@ -47,12 +47,20 @@ public class ScheduledFixed{
     private RefreshTokenService refreshTokenService;
 
     @Autowired
+    private AccessTokenService accessTokenService;
+
+    @Autowired
     private EmailService emailService;
 
     @Scheduled(fixedDelay = 180000)
-    public void updateStateClass() {
+    public void updateRefreshToken() {
         log.info("Test refresh token up to time- The time is now {}", formatter.format(new Date()));
         refreshTokenService.updateByDelete();
+    }
+    @Scheduled(fixedDelay = 60000)
+    public void updateAccessToken() {
+        log.info("Test access token up to time- The time is now {}", formatter.format(new Date()));
+        accessTokenService.updateByDelete();
     }
 
     @Scheduled(cron = "0 0 0 * * *")

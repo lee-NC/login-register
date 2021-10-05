@@ -1,4 +1,4 @@
-package com.jasu.loginregister.Email;
+package com.jasu.loginregister.Config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

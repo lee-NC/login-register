@@ -13,4 +13,6 @@ public interface RefreshTokenService {
     boolean checkTimeLogin(String toString);
 
     void updateByDelete();
+
+    void updateRefreshToken(RefreshToken refreshToken);
 }

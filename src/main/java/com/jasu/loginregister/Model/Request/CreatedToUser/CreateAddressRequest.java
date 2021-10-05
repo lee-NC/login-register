@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 @Data
 @AllArgsConstructor
@@ -18,6 +19,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "addressDetail is required")
     @NotEmpty(message = "addressDetail is required")
+    @Size(max = 15)
     @ApiModelProperty(
             example="SN XX",
             notes="Password can't be empty",
@@ -27,6 +29,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "ward is required")
     @NotEmpty(message = "ward is required")
+    @Size(max = 15)
     @ApiModelProperty(
             example="Cau Dien",
             notes="ward can't be empty"
@@ -35,6 +38,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "district is required")
     @NotEmpty(message = "district is required")
+    @Size(max = 15)
     @ApiModelProperty(
             example="Cau Giay",
             notes="district can't be empty",
@@ -44,6 +48,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "province is required")
     @NotEmpty(message = "province is required")
+    @Size(max = 15)
     @ApiModelProperty(
             example="Ha Noi",
             notes="province can't be empty",

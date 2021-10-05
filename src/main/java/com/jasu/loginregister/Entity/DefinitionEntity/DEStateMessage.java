@@ -29,9 +29,12 @@ public class DEStateMessage {
 
     //define number
     public static final int YEAR_ACHIEVEMENT = 1970;//thoi gian nam bat dau, gioi han
-    public static final long TIME_PER_DAY = 86400000l; //là thời gian một ngày tính theo giây
-    public static final long REFRESH_EXP_DATE = 259200000l;//là thời gian 3*một ngày tính theo giây
-    public static final long ACCESS_EXP_DATE = 10800000l;//là thời gian 3 * một giờ tính theo giây
+    public static final int MAX_FAILED_LOGIN = 5;//gioi han dang nhap
+    public static final int CACHE_MAX_LIMIT = 1000;//gioi han thong tin dang nhap
+    public static final long TIME_PER_HOUR = 3600000l; //là thời gian một ngày tính theo giây
+    public static final long REFRESH_EXP_DATE = 259200000l;//là thời gian 3 ngày tính theo giây
+    public static final long ACCESS_EXP_DATE = 10800000l;//là thời gian 3 giờ tính theo giây
+
 
 
     //Define String

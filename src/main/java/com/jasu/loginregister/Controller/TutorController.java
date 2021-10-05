@@ -72,7 +72,7 @@ public class TutorController {
     private EmailService emailService;
 
     @PostMapping("/create_class")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #createClassroomRequest.userCreateId)")
     @Secured("TUTOR")
     public ResponseEntity<?> tutorCreateClass(@Valid @RequestBody CreateClassroomRequest createClassroomRequest){
         log.info("Tutor create class in Controller");
@@ -94,7 +94,7 @@ public class TutorController {
     }
 
     @PostMapping("/apply")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #applyClassRequest.userId)")
     @Secured("TUTOR")
     public ResponseEntity<?> tutorApplyClass(@Valid @RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor apply class in Controller");
@@ -147,7 +147,7 @@ public class TutorController {
     }
 
     @PostMapping("/approve")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #approveClassRequest.userCreatedId)")
     @Secured("TUTOR")
     public ResponseEntity<?> tutorApproveClass(@Valid @RequestBody ApproveClassRequest approveClassRequest){
         log.info("Tutor approve a student for a class in Controller");
@@ -218,7 +218,7 @@ public class TutorController {
     }
 
     @PostMapping("/cancel_apply")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #applyClassRequest.userId)")
     @Secured("TUTOR")
     public ResponseEntity<?> tutorCancelApplyClass(@Valid @RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor cancel sign up class in Controller");
@@ -251,7 +251,7 @@ public class TutorController {
     }
 
     @PostMapping("/like_class")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #applyClassRequest.userId)")
     @Secured("TUTOR")
     public ResponseEntity<?> likeClass(@RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor like class in Controller");
@@ -267,7 +267,7 @@ public class TutorController {
     }
 
     @PostMapping("/dislike_class")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #applyClassRequest.userId)")
     @Secured("TUTOR")
     public ResponseEntity<?> dislikeClass(@RequestBody ApplyClassRequest applyClassRequest) {
         log.info("Tutor dislike class in Controller");
@@ -283,7 +283,7 @@ public class TutorController {
     }
 
     @PostMapping("/list_class")
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #listClassRequest.userId)")
     @Secured("USER")
     public ResponseEntity<?> getClassApplyByUserId(@RequestBody ListClassRequest listClassRequest) {
         log.info("get list class tutor in Controller");
@@ -305,7 +305,7 @@ public class TutorController {
     }
 
     @PostMapping("/list_student")
-    @PreAuthorize("hasAuthority('TUTOR')")
+    @PreAuthorize("hasAuthority('TUTOR') && (authentication.principal.id == #listUserRequest.userId)")
     @Secured("TUTOR")
     public ResponseEntity<?> getStudentInAClassByClassId(@RequestBody ListUserRequest listUserRequest) {
         log.info("get list class tutor sign up in Controller");

@@ -21,11 +21,14 @@ public abstract class BaseEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Boolean deleted;
 
     @CreatedDate
+    @Column(nullable = false)
     private String createdAt;
 
+    @Column(nullable = false)
     private String createdBy;
 
     @LastModifiedDate

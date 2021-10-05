@@ -63,10 +63,6 @@ public class RegistryController {
     public ResponseEntity<?> registryUser(@Valid @RequestBody CreateUserRequest createUserRequest){
         log.info("Registry User in Controller");
         User saveUser = UserMapper.toUser(createUserRequest);
-        Role role = roleService.findByRoleKey(DeRole.USER.getAuthority());
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
-        saveUser.setRoles(roles);
         UserDto userDto = userService.createUser(saveUser);
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
         User checkUser = userService.findByEmail(createUserRequest.getEmail());
@@ -82,7 +78,7 @@ public class RegistryController {
 //        }
         emailService.sendAnEmail(checkUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
 
-        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
                 checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
@@ -109,10 +105,6 @@ public class RegistryController {
         log.info("Registry Tutor in Controller");
         User checkUser = userService.findByID(createTutorRequest.getUserId());
         if (!userRoleService.existUserRole(createTutorRequest.getUserId(),DeRole.TUTOR.getAuthority())){
-            Role role = roleService.findByRoleKey(DeRole.TUTOR.getAuthority());
-            checkUser.getRoles().add(role);
-            checkUser.setRoles(checkUser.getRoles());
-            userService.updateUser(checkUser);
             Tutor tutor = tutorService.createTutor(createTutorRequest);
             TutorDto tutorDto = UserMapper.toTutorDto(tutor,checkUser);
             userRoleService.createUserRole(checkUser.getId(), DeRole.TUTOR.getAuthority());
@@ -133,10 +125,6 @@ public class RegistryController {
         log.info("Registry Student in Controller");
         User checkUser = userService.findByID(createStudentRequest.getUserId());
         if (!userRoleService.existUserRole(checkUser.getId(), DeRole.STUDENT.getAuthority())){
-            Role role = roleService.findByRoleKey(DeRole.STUDENT.getAuthority());
-            checkUser.getRoles().add(role);
-            checkUser.setRoles(checkUser.getRoles());
-            userService.updateUser(checkUser);
             Student student = studentService.createStudent(createStudentRequest);
             StudentDto studentDto = UserMapper.toStudentDto(student,checkUser);
             userRoleService.createUserRole(checkUser.getId(), DeRole.STUDENT.getAuthority());

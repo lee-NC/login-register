@@ -1,16 +1,20 @@
 package com.jasu.loginregister.ServiceImplement;
 
+import com.jasu.loginregister.Entity.AccessToken;
 import com.jasu.loginregister.Entity.RefreshToken;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Exception.ForbiddenException;
 import com.jasu.loginregister.Exception.NotFoundException;
+import com.jasu.loginregister.Repository.AccessTokenRepository;
 import com.jasu.loginregister.Repository.RefreshTokenRepository;
 import com.jasu.loginregister.Repository.UserRepository;
 import com.jasu.loginregister.Service.RefreshTokenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
@@ -25,6 +29,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
   @Autowired
   private RefreshTokenRepository refreshTokenRepository;
+
+  @Autowired
+  private AccessTokenRepository accessTokenRepository;
 
   @Autowired
   private UserRepository userRepository;
@@ -48,6 +55,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
       refreshToken.setDeleted(false);
       refreshToken.setCreatedAt(formatter.format(date));
       refreshToken.setCreatedBy(userId.toString());
+      refreshToken.setNumUses(0);
       refreshToken = refreshTokenRepository.saveAndFlush(refreshToken);
     }catch (Exception e){
       System.out.println(e.getMessage());
@@ -68,18 +76,25 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   @Override
+  @Transactional
+  @Modifying
   public void deleteByUserId(Long userId) {
     log.info("Delete token");
     RefreshToken refreshToken = refreshTokenRepository.findTopByCreatedByAndDeleted(userId.toString(),false);
-    if (refreshToken ==null){
+    AccessToken accessToken = accessTokenRepository.findByRefreshToken(refreshToken);
+    if (refreshToken ==null||accessToken==null){
       throw new ForbiddenException("ACCESS DENIED");
     }
     try {
       refreshToken.setDeleted(true);
       refreshTokenRepository.saveAndFlush(refreshToken);
-      User user = userRepository.getById(Long.parseLong(refreshToken.getCreatedBy()));
+
+      User user = userRepository.getById(userId);
       user.setState("LOGOUT");
       userRepository.saveAndFlush(user);
+
+      accessTokenRepository.delete(accessToken);
+
     }catch (Exception e){
       System.out.println(e.getMessage());
     }
@@ -114,8 +129,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   @Override
+  @Modifying
+  @Transactional
   public void updateByDelete() {
-    log.info("Check refresh token up to date ");
+    log.info("Update refresh token in service ");
     try {
       Date date = new Date();
       List<RefreshToken> tokens = refreshTokenRepository.findAllByDeleted(false);
@@ -124,6 +141,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
       }
       for (RefreshToken token: tokens){
         if (token.getExpiryDate().isBefore(date.toInstant())){
+            System.out.println(token.getExpiryDate().toString());
           token.setDeleted(true);
           refreshTokenRepository.saveAndFlush(token);
           User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
@@ -131,6 +149,20 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
           userRepository.saveAndFlush(user);
         }
       }
+    }catch (Exception e){
+      System.out.println(e.getMessage());
+    }
+  }
+
+  @Override
+  @Transactional
+  @Modifying
+  public void updateRefreshToken(RefreshToken refreshToken) {
+    try {
+      refreshTokenRepository.saveAndFlush(refreshToken);
+      AccessToken accessToken = accessTokenRepository.findByRefreshToken(refreshToken);
+      accessTokenRepository.delete(accessToken);
+
     }catch (Exception e){
       System.out.println(e.getMessage());
     }

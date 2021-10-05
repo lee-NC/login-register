@@ -1,13 +1,11 @@
 package com.jasu.loginregister.Model.Request.RelatedToClass;
 
-import com.jasu.loginregister.Entity.Lesson;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 @Data

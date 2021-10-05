@@ -133,23 +133,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public User loginWithEmailAndPassword(String email, String password) {
         log.info("Login in Service");
-
-        User saveUser = new User();
+        
         try {
             //check email exist
             User result = userRepository.findByEmail(email);
 
             //compare password
-            if (result==null||!new BCryptPasswordEncoder().matches(password,result.getPassword())||result.getDeleted()){
-                throw new NotFoundException("No user found");
+            if (result==null){
+                throw new NotFoundException("Wrong password or username");
+            }
+
+            if (!new BCryptPasswordEncoder().matches(password,result.getPassword())||result.getDeleted()){
+                throw new NotFoundException("Wrong password or username");
             }
 
             //check state
             if (result.getState().equals("LOGIN")){
                 throw new ForbiddenException("You logged in before. Do you want to log out?");
             }
-            result.setState("LOGIN");
 
+            result.setState("LOGIN");
             //check active time to count num active
             if (result.getNumActive()<=7 && checkTime(result.getLastActive())==1)    {
                 result.setNumActive(result.getNumActive()+1);
@@ -164,6 +167,7 @@ public class UserServiceImpl implements UserService {
             return   userRepository.saveAndFlush(result);
         }catch (Exception e){
             System.out.println(e.getMessage());
+
             throw new ForbiddenException("ACCESS DENIED");
         }
     }

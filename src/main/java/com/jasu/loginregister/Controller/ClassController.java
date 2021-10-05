@@ -2,30 +2,25 @@ package com.jasu.loginregister.Controller;
 
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
-import com.jasu.loginregister.Exception.NotFoundException;
+import com.jasu.loginregister.Filter.FilterService;
 import com.jasu.loginregister.Model.Dto.BasicDto.StudentDto;
 import com.jasu.loginregister.Model.Dto.BasicDto.TutorDto;
 import com.jasu.loginregister.Model.Dto.ClassDto;
 import com.jasu.loginregister.Model.Mapper.ClassMapper;
-import com.jasu.loginregister.Model.Mapper.UserDetailMapper;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
 import com.jasu.loginregister.Model.Request.ContentFilter;
-import com.jasu.loginregister.Model.Request.CreatedToUser.SchoolRequest;
 import com.jasu.loginregister.Model.Request.FilterRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.LessonRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.UpdateClassroomRequest;
 import com.jasu.loginregister.Model.Request.RelatedToClass.UpdateLessonRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.DeleteAchievementSchoolRequest;
-import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateSchoolRequest;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.repository.query.Param;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.ACTION_UNSUCCESSFULLY;
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.STATE_WAITING;
@@ -137,7 +131,7 @@ public class ClassController {
     }
 
     @GetMapping("/suggest/{id}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
     @Secured("USER")
     public ResponseEntity<?> suggestClass(@PathVariable("id") Long userId, Model model) {
         log.info("Suggest class in Controller");
@@ -154,7 +148,7 @@ public class ClassController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR')")
+    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #updateClassroomRequest.userCreateId)")
     @Secured({"STUDENT","TUTOR"})
     public ResponseEntity<?> updateClassInformation(@Valid @RequestBody UpdateClassroomRequest updateClassroomRequest, @PathVariable("id") Long classId){
         log.info("Update create class in Controller");

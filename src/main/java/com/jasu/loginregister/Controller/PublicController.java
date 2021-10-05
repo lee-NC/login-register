@@ -21,11 +21,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.ACTION_SUCCESSFULLY;
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.ACTION_UNSUCCESSFULLY;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @RestController
 @Slf4j
@@ -44,6 +43,9 @@ public class PublicController {
     RefreshTokenService refreshTokenService;
 
     @Autowired
+    AccessTokenService accessTokenService;
+
+    @Autowired
     AuthenticationManager authenticationManager;
 
     @PostMapping("/login")
@@ -55,31 +57,32 @@ public class PublicController {
         if (refreshTokenService.checkTimeLogin(checkUser.getId().toString())){
 
             String jwt = jwtUtils.generateJwtToken(userPrincipal);
-
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
-
-            return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userPrincipal.getId(),
+            accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
+            return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
                     checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
         }
-        return ResponseEntity.badRequest().body("ACCESS DENIED");
+        throw new ForbiddenException("ACCESS DENIED");
     }
 
     @PostMapping("/refresh")
-    @PreAuthorize("hasAnyAuthority('USER')")
-    @Secured("USER")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         log.info("Refresh token in Controller");
         String requestRefreshToken = request.getRefreshToken();
         RefreshToken refreshToken =  refreshTokenService.findByToken(requestRefreshToken);
-        if(refreshTokenService.verifyExpiration(refreshToken)){
-            String token = jwtUtils.generateTokenFromUsername(refreshToken.getUser().getEmail());
+        if(refreshTokenService.verifyExpiration(refreshToken) && !refreshToken.getDeleted()
+            && refreshToken.getNumUses()<24   ){
+            String token = jwtUtils.generateTokenFromUserId(refreshToken.getUser().getId());
+            refreshToken.setNumUses(refreshToken.getNumUses()+1);
+            refreshTokenService.updateRefreshToken(refreshToken);
+            accessTokenService.createAccessToken(defineAccessToken(refreshToken,token));
             return ResponseEntity.ok("accessToken: "+token);
         }
-        return ResponseEntity.badRequest().body("Refresh token was expired. Please make a new login request");
+        throw new ForbiddenException("Refresh token was expired. Please make a new login request");
     }
 
     @PutMapping("/logout/{id}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
     @Secured("USER")
     public ResponseEntity<?> logoutUser(@PathVariable("id") Long  userId) {
         log.info("Logout in Controller");
@@ -87,15 +90,13 @@ public class PublicController {
         if (user.getState().equals("LOGOUT")){
             throw new ForbiddenException("You logged out before.Do you want to log in?");
         }
-        user.setState("LOGOUT");
-        userService.updateUser(user);
         refreshTokenService.deleteByUserId(userId);
+
         return ResponseEntity.ok("Log out successful!");
     }
 
     @PostMapping("/recharge/{id}")
-    @PreAuthorize("!hasAuthority('USER') " +
-            "|| (authentication.principal == @userRepository.findById(#id).orElse(new net.reliqs.gleeometer.users.User()).email)")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
     @Secured("USER")
     public ResponseEntity<?> recharge(@PathVariable("id") Long  userId, @Valid @RequestBody PaymentRequest paymentRequest) {
         log.info("Charge money in Controller");
@@ -110,11 +111,11 @@ public class PublicController {
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
             switch (paymentRequest.getCurrency()){
                 case "VND":{
-                    coin = paymentRequest.getFee()/100l;
+                    coin = paymentRequest.getFee()/100L;
                     break;
                 }
                 case "USD":{
-                    coin = paymentRequest.getFee()/100l*22753l;
+                    coin = paymentRequest.getFee()/100L*22753L;
                     break;
                 }
                 default:{
@@ -130,5 +131,17 @@ public class PublicController {
             return ResponseEntity.ok(ACTION_SUCCESSFULLY);
         }
         return ResponseEntity.badRequest().body(ACTION_UNSUCCESSFULLY);
+    }
+
+    private AccessToken defineAccessToken(RefreshToken refreshToken, String jwt){
+        AccessToken accessToken = new AccessToken();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date();
+        accessToken.setRefreshToken(refreshToken);
+        accessToken.setExpiryDate(Instant.now().plusMillis(TIME_PER_HOUR));
+        accessToken.setAccessToken(jwt);
+        accessToken.setCreatedAt(formatter.format(date));
+
+        return accessToken;
     }
 }
