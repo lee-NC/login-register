@@ -67,6 +67,7 @@ public class UserMapper {
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
         user.setChangePassword(false);
+        user.setNumGetOTP(1);
 
 
         user.setCoin(0L);

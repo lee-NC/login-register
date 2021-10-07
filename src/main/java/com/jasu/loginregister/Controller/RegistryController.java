@@ -70,53 +70,11 @@ public class RegistryController {
         User saveUser = UserMapper.toUser(createUserRequest);
         UserDto userDto = userService.createUser(saveUser);
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
-        try {
-            sendVerificationEmail(saveUser.getEmail(),saveUser.getOneTimePassword());
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
-        return ResponseEntity.ok("Check your email to verify that you registry with us.");
-    }
 
-    @GetMapping("/get_OTP")
-    public ResponseEntity<?> getNewOTP(@RequestParam("email") String email){
-        log.info("Get new OTP in Controller");
-        User saveUser = userService.findByEmail(email);
         String encodedOTP = RandomString.make(8);
-        saveUser.setOneTimePassword(encodedOTP);
-        saveUser.setOtpRequestTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
-        userService.updateUser(saveUser);
-        try {
-            sendVerificationEmail(saveUser.getEmail(),saveUser.getOneTimePassword());
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
         emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
         return ResponseEntity.ok("Check your email to verify that you registry with us.");
-    }
-
-    public void sendVerificationEmail(String email, String encodedOTP)
-            throws MessagingException, UnsupportedEncodingException {
-        VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
-        emailService.sendAnEmail(email,VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
-    }
-
-    @GetMapping("/verify_registry")
-    public ResponseEntity<?> verifyUserRegistry(@RequestParam("code") String code) {
-
-        log.info("Verfify email");
-        User checkUser = userService.verifyUserRegistry(code);
-        UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
-        String jwt = jwtUtils.generateJwtToken(userPrincipal);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
-        System.out.println("find");
-        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
-                checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
     @PostMapping("/registry/tutor")

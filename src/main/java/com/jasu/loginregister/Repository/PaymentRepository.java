@@ -9,4 +9,7 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface PaymentRepository extends JpaRepository<Payment,Long> {
+    Payment findByToken(String code);
+
+    Payment findTopByCreatedBy(String userId);
 }

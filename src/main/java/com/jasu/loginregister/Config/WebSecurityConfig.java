@@ -65,8 +65,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers("/registry").permitAll()//login need public
 				.antMatchers("/refresh").permitAll()//refresh need public
 				.antMatchers("/reset_password*").permitAll()//forgot_password need public
-				.antMatchers("/verify_registry*").permitAll()//verify registry request need public
-				.antMatchers("/verify_password*").permitAll()//verify registry request need public
+				.antMatchers("/verify").permitAll()//verify request need public
 				.antMatchers("/get_OTP*").permitAll()//login need public
 			    .anyRequest().authenticated();
 

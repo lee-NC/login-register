@@ -12,6 +12,7 @@ import com.jasu.loginregister.Model.Request.PaymentRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.*;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.utility.RandomString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.repository.query.Param;
@@ -24,8 +25,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import javax.validation.Valid;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -362,15 +365,53 @@ public class UserController {
                     throw new NotFoundException("This currency is not supported");
                 }
             }
-            Payment payment = new Payment(paymentRequest.getFee(), paymentRequest.getCurrency(),
-                    paymentRequest.getMethod(), paymentRequest.getIntent(),formatter.format(new Date()),userId);
-            paymentService.createPayment(payment);
+            String encodedOTP = RandomString.make(8);
 
-            user.setCoin(user.getCoin()+coin);
-            userService.updateUser(user);
-            return ResponseEntity.ok(ACTION_SUCCESSFULLY);
+            Payment payment = new Payment(paymentRequest.getFee(), paymentRequest.getCurrency(),
+                    paymentRequest.getMethod(), paymentRequest.getIntent(),coin,formatter.format(new Date()),
+                    userId,false, encodedOTP, new Date(new Date().getTime()+OTP_TIME_TRACKING),1);
+            paymentService.createPayment(payment);
+            VERIFICATION_CONTENT += encodedOTP;
+            emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+            return ResponseEntity.ok("Check your email to verify your action.");
         }
         return ResponseEntity.badRequest().body(ACTION_UNSUCCESSFULLY);
+    }
+
+    @GetMapping("/verify_recharge/{id}")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured("USER")
+    public ResponseEntity<?> verifyRecharge(@RequestParam("code") String code,
+                                              @PathVariable("id") Long userId){
+        log.info("Verify recharge in Controller");
+
+        Payment payment = paymentService.findByToken(code);
+        if(payment.getExpiryTime().after(new Date())&& !payment.isSuccess()){
+            User user = userService.findByID(userId);
+            user.setCoin(user.getCoin()+payment.getCoin());
+            userService.updateUser(user);
+
+            payment.setSuccess(true);
+            paymentService.updatePayment(payment);
+            return ResponseEntity.ok(ACTION_SUCCESSFULLY);
+        }
+        return ResponseEntity.ok("Token is expired ");
+    }
+
+    @GetMapping("/get_OTP/{id}")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured("USER")
+    public ResponseEntity<?> getNewOTPRecharge(@PathVariable("id") Long userId){
+        log.info("Get new OTP in Controller");
+        Payment payment = paymentService.findByCreatedBy(userId.toString());
+        if (!payment.isSuccess()
+            &&payment.getNumGetToken()<MAX_FAILED_LOGIN ){
+            String encodedOTP = RandomString.make(8);
+            payment.setToken(encodedOTP);
+            payment.setExpiryTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
+            payment.setNumGetToken(payment.getNumGetToken()+1);
+        }
+        return ResponseEntity.ok("Check your email to verify your action.");
     }
 
     @GetMapping("/rewrite_password/{id}")

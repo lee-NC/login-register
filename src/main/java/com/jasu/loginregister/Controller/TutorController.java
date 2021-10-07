@@ -34,7 +34,6 @@ import java.util.Locale;
 import java.util.Set;
 
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.APPROVE_STUDENT_SUBJECT;
 
 @RestController
 @Slf4j
@@ -243,7 +242,6 @@ public class TutorController {
             userService.updateUser(tutorCancelApplication);
             checkClassTutor.setState(STATE_CANCELED);
             if (classTutorService.updateClassroomTutor(checkClassTutor)){
-//                emailService.sendAnEmail(tutorCancelApplication.getEmail(),CANCEL_APPLY_CLASS_CONTENT, CANCEL_APPLY_CLASS_SUBJECT);
                 return ResponseEntity.ok(ACTION_CANCEL_APPLY);
             }
         }

@@ -120,18 +120,17 @@ public class UserServiceImpl implements UserService {
     public User verifyUserRegistry(String code) {
         User user = userRepository.findByOneTimePassword(code);
 
-        System.out.println("find");
         if (user == null || user.getEnabled()) {
             throw new NotFoundException("No user found");
         }
-        System.out.println("find");
+
         if (user.getOtpRequestTime().before(new Date())){
             throw new ForbiddenException("ACCESS DENIED");
         }
-        System.out.println("find");
         user.setOneTimePassword(null);
         user.setOtpRequestTime(null);
         user.setEnabled(true);
+        user.setNumGetOTP(0);
         return userRepository.saveAndFlush(user);
     }
 

@@ -23,9 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
-import javax.mail.MessagingException;
 import javax.validation.Valid;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -110,25 +108,50 @@ public class PublicController {
     public ResponseEntity<?> resetPassword(@RequestParam("email") String email){
         log.info("Get new OTP in Controller");
         User saveUser = userService.findByEmail(email);
-        String encodedOTP = RandomString.make(8);
-        saveUser.setOneTimePassword(encodedOTP);
-        saveUser.setOtpRequestTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
-        userService.updateUser(saveUser);
-        try {
-            sendVerificationEmail(saveUser.getEmail(),saveUser.getOneTimePassword());
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+
+        if (saveUser.getNumGetOTP()<MAX_FAILED_LOGIN){
+            String encodedOTP = RandomString.make(8);
+            saveUser.setOneTimePassword(encodedOTP);
+            saveUser.setOtpRequestTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
+            saveUser.setNumGetOTP(1);
+            userService.updateUser(saveUser);
+
+            VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
+            emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+            return ResponseEntity.ok("Check your email to verify that this is you.");
         }
-        emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
-        return ResponseEntity.ok("Check your email to verify that this is you.");
+        return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
     }
 
-    public void sendVerificationEmail(String email, String encodedOTP)
-            throws MessagingException, UnsupportedEncodingException {
-        VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
-        emailService.sendAnEmail(email,VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+    @GetMapping("/get_OTP")
+    public ResponseEntity<?> getNewOTP(@RequestParam("email") String email){
+        log.info("Get new OTP in Controller");
+        User saveUser = userService.findByEmail(email);
+
+        if (saveUser.getNumGetOTP()<MAX_FAILED_LOGIN){
+            String encodedOTP = RandomString.make(8);
+            saveUser.setOneTimePassword(encodedOTP);
+            saveUser.setOtpRequestTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
+            saveUser.setNumGetOTP(saveUser.getNumGetOTP()+1);
+            userService.updateUser(saveUser);
+
+            VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
+            emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+            return ResponseEntity.ok("Check your email to verify your action.");
+        }
+        return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
+    }
+
+    @GetMapping("/verify_registry")
+    public ResponseEntity<?> verifyUserRegistry(@RequestParam("code") String code) {
+
+        log.info("Verify email");
+        User checkUser = userService.verifyUserRegistry(code);
+        UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
+        String jwt = jwtUtils.generateJwtToken(userPrincipal);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+                checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
     @GetMapping("/verify_password")
@@ -140,7 +163,17 @@ public class PublicController {
             user.setPassword(hash);
             userService.updateUser(user);
             emailService.sendAnEmail(user.getEmail(),"You have change password at "+ new Date(),"Change password already");
-            return ResponseEntity.ok(ACTION_SUCCESSFULLY);
+
+            UserPrincipal userPrincipal = UserMapper.toUserPrincipal(user);
+            if (refreshTokenService.checkTimeLogin(user.getId().toString())
+                    &&refreshTokenService.checkNearLoginTime(user.getId().toString())){
+
+                String jwt = jwtUtils.generateJwtToken(userPrincipal);
+                RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+                accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
+                return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+                        user.getFullName(),user.getNumActive(),user.getAvatar(), user.getCoin()));
+            }
         }
         return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
     }

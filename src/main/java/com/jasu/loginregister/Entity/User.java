@@ -65,6 +65,9 @@ public class User extends BaseEntity {
     @Column()
     private Date otpRequestTime;
 
+    @Column()
+    private int numGetOTP;
+
     @Column(nullable = false)
     private Boolean changePassword;
 
