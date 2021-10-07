@@ -12,7 +12,7 @@ public class UserPrincipal implements UserDetails {
 
     private Collection authorities;
 
-//    private boolean enabled;
+    private boolean enabled;
 
 
     @Override
@@ -40,8 +40,4 @@ public class UserPrincipal implements UserDetails {
         return false;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return false;
-    }
 }

@@ -116,19 +116,36 @@ public class UserServiceImpl implements UserService {
         return result;
     }
 
-//    @Override
-//    public boolean verifyUser(String code) {
-//        User user = userRepository.findByVerificationCode(code);
-//
-//        if (user == null || user.isEnabled()) {
-//            return false;
-//        } else {
-//            user.setVerificationCode(null);
-//            user.setEnabled(true);
-//            userRepository.saveAndFlush(user);
-//            return true;
-//        }
-//    }
+    @Override
+    public User verifyUserRegistry(String code) {
+        User user = userRepository.findByOneTimePassword(code);
+
+        System.out.println("find");
+        if (user == null || user.getEnabled()) {
+            throw new NotFoundException("No user found");
+        }
+        System.out.println("find");
+        if (user.getOtpRequestTime().before(new Date())){
+            throw new ForbiddenException("ACCESS DENIED");
+        }
+        System.out.println("find");
+        user.setOneTimePassword(null);
+        user.setOtpRequestTime(null);
+        user.setEnabled(true);
+        return userRepository.saveAndFlush(user);
+    }
+
+    @Override
+    public void updateVerifyToken() {
+        List<User> userList = userRepository.findUserByExpiredOTP();
+        for (User user:userList){
+            if (user.getOtpRequestTime().before(new Date())){
+                user.setOneTimePassword(null);
+                user.setOtpRequestTime(null);
+                userRepository.saveAndFlush(user);
+            }
+        }
+    }
 
     @Override
     public User loginWithEmailAndPassword(String email, String password) {
@@ -143,7 +160,7 @@ public class UserServiceImpl implements UserService {
                 throw new NotFoundException("Wrong password or username");
             }
 
-            if (!new BCryptPasswordEncoder().matches(password,result.getPassword())||result.getDeleted()){
+            if (!new BCryptPasswordEncoder().matches(password,result.getPassword())||result.getDeleted()||!result.getEnabled()){
                 throw new NotFoundException("Wrong password or username");
             }
 

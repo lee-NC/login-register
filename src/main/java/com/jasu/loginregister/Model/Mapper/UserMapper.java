@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.OTP_TIME_TRACKING;
+
 public class UserMapper {
 
     public static UserPrincipal toUserPrincipal(User user) {
@@ -58,12 +60,14 @@ public class UserMapper {
         Address address = toAddress(req.getCreateAddressRequest());
         User user = new User();
 
-//        String randomCode = RandomString.make(64);
-//        user.setVerificationCode(randomCode);
-//        user.setEnabled(false);
-
+        String encodedOTP = RandomString.make(8);
+        user.setOneTimePassword(encodedOTP);
+        user.setOtpRequestTime(new Date(date.getTime() + OTP_TIME_TRACKING));
+        user.setEnabled(false);
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
+        user.setChangePassword(false);
+
 
         user.setCoin(0L);
         user.setState("LOGIN");

@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.DELAY_TIME_REFRESH;
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.REFRESH_EXP_DATE;
 
 
@@ -36,6 +37,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Autowired
   private UserRepository userRepository;
 
+  private SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
   public RefreshToken findByToken(String token) {
     RefreshToken refreshToken = refreshTokenRepository.findByToken(token);
     if (refreshToken==null){
@@ -47,7 +50,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   public RefreshToken createRefreshToken(Long userId) {
     RefreshToken refreshToken = new RefreshToken();
     try {
-      SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
       Date date = new Date();
       refreshToken.setUser(userRepository.findById(userId).get());
       refreshToken.setExpiryDate(Instant.now().plusMillis(REFRESH_EXP_DATE));
@@ -56,6 +59,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
       refreshToken.setCreatedAt(formatter.format(date));
       refreshToken.setCreatedBy(userId.toString());
       refreshToken.setNumUses(0);
+      refreshToken.setDelayTime(new Date(date.getTime()+DELAY_TIME_REFRESH));
       refreshToken = refreshTokenRepository.saveAndFlush(refreshToken);
     }catch (Exception e){
       System.out.println(e.getMessage());
@@ -67,6 +71,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
     if (token.getExpiryDate().compareTo(Instant.now()) < 0||user.getState().equals("LOGOUT")) {
       token.setDeleted(true);
+      token.setUpdatedAt(new Date());
       refreshTokenRepository.saveAndFlush(token);
       user.setState("LOGOUT");
       userRepository.saveAndFlush(user);
@@ -76,7 +81,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   @Override
-  @Transactional
   @Modifying
   public void deleteByUserId(Long userId) {
     log.info("Delete token");
@@ -143,6 +147,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         if (token.getExpiryDate().isBefore(date.toInstant())){
             System.out.println(token.getExpiryDate().toString());
           token.setDeleted(true);
+          token.setUpdatedAt(new Date());
           refreshTokenRepository.saveAndFlush(token);
           User user = userRepository.getById(Long.parseLong(token.getCreatedBy()));
           user.setState("LOGOUT");
@@ -159,12 +164,30 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Modifying
   public void updateRefreshToken(RefreshToken refreshToken) {
     try {
+      refreshToken.setUpdatedAt(new Date());
+      refreshToken.setDelayTime(new Date(new Date().getTime()+DELAY_TIME_REFRESH));
       refreshTokenRepository.saveAndFlush(refreshToken);
       AccessToken accessToken = accessTokenRepository.findByRefreshToken(refreshToken);
+      if (accessToken == null){
+        return;
+      }
+
       accessTokenRepository.delete(accessToken);
 
     }catch (Exception e){
       System.out.println(e.getMessage());
     }
+  }
+
+  @Override
+  public boolean checkNearLoginTime(String userId) {
+    RefreshToken refreshToken = refreshTokenRepository.findTopByCreatedBy(userId);
+    if (refreshToken==null){
+      return true;
+    }
+    if (refreshToken.getUpdatedAt().before(new Date(new Date().getTime()-DELAY_TIME_REFRESH))){
+      return false;
+    }
+    return true;
   }
 }

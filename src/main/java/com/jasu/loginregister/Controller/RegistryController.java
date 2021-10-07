@@ -14,24 +14,30 @@ import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
 import com.jasu.loginregister.Model.Request.CreatedToUser.*;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.utility.RandomString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
 import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @RestController
 @Slf4j
-@RequestMapping("/registry")
+@RequestMapping("")
 public class RegistryController {
 
     @Autowired
@@ -56,51 +62,66 @@ public class RegistryController {
     private UserRoleService userRoleService;
 
     @Autowired
-    private EmailService emailService;
+    public EmailService emailService;
 
-
-    @PostMapping("")
+    @PostMapping("/registry")
     public ResponseEntity<?> registryUser(@Valid @RequestBody CreateUserRequest createUserRequest){
         log.info("Registry User in Controller");
         User saveUser = UserMapper.toUser(createUserRequest);
         UserDto userDto = userService.createUser(saveUser);
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
-        User checkUser = userService.findByEmail(createUserRequest.getEmail());
+        try {
+            sendVerificationEmail(saveUser.getEmail(),saveUser.getOneTimePassword());
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+        return ResponseEntity.ok("Check your email to verify that you registry with us.");
+    }
+
+    @GetMapping("/get_OTP")
+    public ResponseEntity<?> getNewOTP(@RequestParam("email") String email){
+        log.info("Get new OTP in Controller");
+        User saveUser = userService.findByEmail(email);
+        String encodedOTP = RandomString.make(8);
+        saveUser.setOneTimePassword(encodedOTP);
+        saveUser.setOtpRequestTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
+        userService.updateUser(saveUser);
+        try {
+            sendVerificationEmail(saveUser.getEmail(),saveUser.getOneTimePassword());
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+        return ResponseEntity.ok("Check your email to verify that you registry with us.");
+    }
+
+    public void sendVerificationEmail(String email, String encodedOTP)
+            throws MessagingException, UnsupportedEncodingException {
+        VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
+        emailService.sendAnEmail(email,VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+    }
+
+    @GetMapping("/verify_registry")
+    public ResponseEntity<?> verifyUserRegistry(@RequestParam("code") String code) {
+
+        log.info("Verfify email");
+        User checkUser = userService.verifyUserRegistry(code);
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
         String jwt = jwtUtils.generateJwtToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
-//        try {
-//            sendVerificationEmail(checkUser, "http://localhost:8080/");
-//        } catch (MessagingException e) {
-//            e.printStackTrace();
-//        } catch (UnsupportedEncodingException e) {
-//            e.printStackTrace();
-//        }
-        emailService.sendAnEmail(checkUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
-
+        System.out.println("find");
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
                 checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
-//    private void sendVerificationEmail(User user, String siteURL)
-//            throws MessagingException, UnsupportedEncodingException {
-//        String verifyURL = siteURL + "/verify?code=" + user.getVerificationCode();
-//        VERIFICATION_CONTENT = VERIFICATION_CONTENT.replace("[[name]]",user.getFullName());
-//        VERIFICATION_CONTENT = VERIFICATION_CONTENT.replace("[[URL]]",verifyURL);
-//        emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
-//    }
-
-//    @GetMapping("/verify")
-//    public ResponseEntity<?> verifyUser(@Param("code") String code) {
-//        if (userService.verifyUser(code)) {
-//            return ResponseEntity.ok("Verify successfully");
-//        } else {
-//            return ResponseEntity.badRequest().body("Verify unsuccessfully");
-//        }
-//    }
-
-
-    @PostMapping("/tutor")
+    @PostMapping("/registry/tutor")
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #createTutorRequest.userId)")
+    @Secured("USER")
     public ResponseEntity<?> registryTuTor(@Valid @RequestBody CreateTutorRequest createTutorRequest){
         log.info("Registry Tutor in Controller");
         User checkUser = userService.findByID(createTutorRequest.getUserId());
@@ -120,7 +141,9 @@ public class RegistryController {
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST, DEStateMessage.ACTION_UNSUCCESSFULLY));
     }
 
-    @PostMapping("/student")
+    @PostMapping("/registry/student")
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #createStudentRequest.userId)")
+    @Secured("USER")
     public ResponseEntity<?> registryStudent(@Valid @RequestBody CreateStudentRequest createStudentRequest){
         log.info("Registry Student in Controller");
         User checkUser = userService.findByID(createStudentRequest.getUserId());

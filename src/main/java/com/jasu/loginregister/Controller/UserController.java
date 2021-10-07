@@ -1,11 +1,14 @@
 package com.jasu.loginregister.Controller;
 
+import com.jasu.loginregister.Email.EmailService;
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
+import com.jasu.loginregister.Exception.ForbiddenException;
 import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Model.Mapper.UserDetailMapper;
 import com.jasu.loginregister.Model.Request.CreatedToUser.AchievementRequest;
 import com.jasu.loginregister.Model.Request.CreatedToUser.SchoolRequest;
+import com.jasu.loginregister.Model.Request.PaymentRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.*;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -16,15 +19,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.YEAR_ACHIEVEMENT;
-
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 @RestController
 @Slf4j
 @RequestMapping("/user")
@@ -50,10 +56,16 @@ public class UserController {
     @Autowired
     private SchoolService schoolService;
 
+    @Autowired
+    private PaymentService paymentService;
+
+    @Autowired
+    public EmailService emailService;
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"STUDENT","TUTOR"})
-    public ResponseEntity<?> getUserById(@PathVariable("id") Long userId) {
+    public ResponseEntity<?> getUserById(@PathVariable("id") Long userId,Model model) {
         log.info("get student by Id in Controller");
         User user = userService.findByID(userId);
         Student student = null;
@@ -64,7 +76,10 @@ public class UserController {
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
         }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        model.addAttribute("userDetailDto",UserDetailMapper.toUserDetailDto(user));
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("studentDetailDto",UserDetailMapper.toStudentDetailDto(student));
+        return ResponseEntity.ok(model);
     }
 
     @GetMapping("/coin/{id}")
@@ -110,28 +125,43 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"STUDENT","TUTOR"})
-    public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long id) {
-        User user = userService.updateDetailUser(req, id);
-        Student updateStudent = null;
-        Tutor updateTutor = null;
-        if (userRoleService.existUserRole(id, DeRole.STUDENT.getAuthority())){
-            if (req.getUpdateStudentRequest()!=null){
-                Student student = studentService.findByUserId(id);
-                if (req.getUpdateStudentRequest().getGrade()>0&&req.getUpdateStudentRequest().getGrade()<13
-                        &&req.getUpdateStudentRequest().getGrade()!=student.getGrade()){
-                    student.setGrade(req.getUpdateStudentRequest().getGrade());
-                }
-                updateStudent = studentService.updateStudent(student);
-            }
-        }
-        if (userRoleService.existUserRole(id, DeRole.TUTOR.getAuthority())){
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long userId) {
+        User user = userService.updateDetailUser(req, userId);
+        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user));
+    }
 
-            if (req.getUpdateTutorRequest()!=null){
-                Tutor tutor = tutorService.findByUserId(id);
-                updateTutor = tutorService.updateTutor(updateTutor(tutor,req.getUpdateTutorRequest()));
+    @PutMapping("/student/{id}")
+    @PreAuthorize("hasAnyAuthority('STUDENT') && (authentication.principal.id == #userId)")
+    @Secured({"STUDENT"})
+    public ResponseEntity<?> updateUserStudent(@Valid @RequestBody UpdateStudentRequest req, @PathVariable("id") Long userId,Model model) {
+        Student updateStudent = null;
+        if (req!=null){
+            Student student = studentService.findByUserId(userId);
+            if (req.getGrade()>0&&req.getGrade()<13
+                    &&req.getGrade()!=student.getGrade()){
+                student.setGrade(req.getGrade());
             }
+            updateStudent = studentService.updateStudent(student);
         }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,updateStudent,updateTutor));
+        model.addAttribute("studentDetailDto",UserDetailMapper.toStudentDetailDto(updateStudent));
+        model.addAttribute("userId",userId);
+        return ResponseEntity.ok(model);
+    }
+
+    @PutMapping("/tutor/{id}")
+    @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
+    @Secured({"TUTOR"})
+    public ResponseEntity<?> updateUserTutor(@Valid @RequestBody UpdateTutorRequest req, @PathVariable("id") Long userId,Model model) {
+
+        Tutor updateTutor = null;
+        if (req!=null){
+            Tutor tutor = tutorService.findByUserId(userId);
+            updateTutor = tutorService.updateTutor(updateTutor(tutor,req));
+        }
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(updateTutor));
+        model.addAttribute("userId",userId);
+
+        return ResponseEntity.ok(model);
     }
 
     private Tutor updateTutor(Tutor checkTutor, UpdateTutorRequest updateTutorRequest){
@@ -149,10 +179,8 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> updateAchievementTutor(@Valid @RequestBody UpdateAchievementRequest req,
-                                                    @PathVariable("id") Long userId) {
+                                                    @PathVariable("id") Long userId, Model model) {
         log.info("update achievement in Controller");
-        User user = userService.findByID(userId);
-        Student student = null;
         Tutor tutor = null;
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             Achievement achievement = achievementService.findById(req.getId());
@@ -170,21 +198,18 @@ public class UserController {
             }
             tutor = tutorService.findByUserId(userId);
         }
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("userId",userId);
 
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        return ResponseEntity.ok(model);
     }
 
     @PostMapping("/achievement/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> createAchievementTutor(@Valid @RequestBody AchievementRequest req,
-                                                    @PathVariable("id") Long userId) {
+                                                    @PathVariable("id") Long userId,Model model) {
         log.info("create achievement in Controller");
-        User user = userService.findByID(userId);
-        Student student = null;
         Tutor tutor = null;
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
@@ -198,20 +223,18 @@ public class UserController {
         else {
             return ResponseEntity.badRequest().body("No tutor found");
         }
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("userId",userId);
+
+        return ResponseEntity.ok(model);
     }
 
     @DeleteMapping("/achievement/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> deleteAchievementTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req,
-                                                    @PathVariable("id") Long userId) {
+                                                    @PathVariable("id") Long userId,Model model) {
         log.info("Delete achievement in Controller");
-        User user = userService.findByID(userId);
-        Student student = null;
         Tutor tutor = null;
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             Achievement achievement = achievementService.findById(req.getId());
@@ -226,20 +249,18 @@ public class UserController {
         else {
             return ResponseEntity.badRequest().body("No tutor found");
         }
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("userId",userId);
+
+        return ResponseEntity.ok(model);
     }
 
     @PutMapping("/school/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> updateSchoolTutor(@Valid @RequestBody UpdateSchoolRequest req,
-                                               @PathVariable("id") Long userId) {
+                                               @PathVariable("id") Long userId, Model model) {
         log.info("updateSchool in Controller");
-        User user = userService.findByID(userId);
-        Student student = null;
         Tutor tutor = null;
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             School school = schoolService.findBySchoolID(req.getId());
@@ -256,20 +277,18 @@ public class UserController {
         }else {
             return ResponseEntity.badRequest().body("No tutor found");
         }
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("userId",userId);
+
+        return ResponseEntity.ok(model);
     }
 
     @PostMapping("/school/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> createSchoolTutor(@Valid @RequestBody SchoolRequest req,
-                                               @PathVariable("id") Long userId) {
+                                               @PathVariable("id") Long userId,Model model) {
         log.info("createSchool in Controller");
-        User user = userService.findByID(userId);
-        Student student = null;
         Tutor tutor = null;
 
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
@@ -283,20 +302,18 @@ public class UserController {
         }else {
             return ResponseEntity.badRequest().body("No tutor found");
         }
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("userId",userId);
+
+        return ResponseEntity.ok(model);
     }
 
     @DeleteMapping("/school/{id}")
     @PreAuthorize("hasAnyAuthority('TUTOR') && (authentication.principal.id == #userId)")
     @Secured({"TUTOR"})
     public ResponseEntity<?> deleteSchoolTutor(@Valid @RequestBody DeleteAchievementSchoolRequest req,
-                                               @PathVariable("id") Long userId) {
+                                               @PathVariable("id") Long userId, Model model) {
         log.info("Delete School in Controller");
-        User user = userService.findByID(userId);
-        Student student = null;
         Tutor tutor = null;
 
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
@@ -312,12 +329,89 @@ public class UserController {
         }else {
             return ResponseEntity.badRequest().body("No tutor found");
         }
-        if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
-            student = studentService.findByUserId(userId);
-        }
-        return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user,student,tutor));
+        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
+        model.addAttribute("userId",userId);
+
+        return ResponseEntity.ok(model);
     }
 
+    @PostMapping("/recharge/{id}")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured("USER")
+    public ResponseEntity<?> recharge(@PathVariable("id") Long  userId, @Valid @RequestBody PaymentRequest paymentRequest) {
+        log.info("Charge money in Controller");
+        User user = userService.findByID(userId);
+        if (user.getState().equals("LOGOUT")
+                ||!user.getEnabled()
+        ){
+            throw new ForbiddenException("ACCESS DENIED");
+        }
+        long coin = 0;
+        if (paymentRequest.getFee()>10){
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            switch (paymentRequest.getCurrency()){
+                case "VND":{
+                    coin = paymentRequest.getFee()/100L;
+                    break;
+                }
+                case "USD":{
+                    coin = paymentRequest.getFee()/100L*22753L;
+                    break;
+                }
+                default:{
+                    throw new NotFoundException("This currency is not supported");
+                }
+            }
+            Payment payment = new Payment(paymentRequest.getFee(), paymentRequest.getCurrency(),
+                    paymentRequest.getMethod(), paymentRequest.getIntent(),formatter.format(new Date()),userId);
+            paymentService.createPayment(payment);
 
+            user.setCoin(user.getCoin()+coin);
+            userService.updateUser(user);
+            return ResponseEntity.ok(ACTION_SUCCESSFULLY);
+        }
+        return ResponseEntity.badRequest().body(ACTION_UNSUCCESSFULLY);
+    }
+
+    @GetMapping("/rewrite_password/{id}")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured("USER")
+    public ResponseEntity<?> rewriterPassword(@RequestParam("password") String password,
+                                            @PathVariable("id") Long userId){
+        log.info("Rewrite password in Controller");
+
+        User saveUser = userService.findByID(userId);
+        if (!new BCryptPasswordEncoder().matches(password,saveUser.getPassword())||saveUser.getDeleted()|| !saveUser.getEnabled()){
+            throw new NotFoundException("Wrong password");
+        }
+        saveUser.setChangePassword(true);
+        userService.updateUser(saveUser);
+        return ResponseEntity.ok(ACTION_SUCCESSFULLY);
+    }
+
+    @GetMapping("/update_password/{id}")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured("USER")
+    public ResponseEntity<?> updatePassword(@RequestParam("password") String password,
+                                            @PathVariable("id") Long userId){
+        log.info("Update password in Controller");
+
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        User saveUser = userService.findByID(userId);
+        if (saveUser.getChangePassword()
+                &&!new BCryptPasswordEncoder().matches(password,saveUser.getPassword())){
+            String hash = BCrypt.hashpw(password, BCrypt.gensalt(12));
+            saveUser.setPassword(hash);
+            saveUser.setChangePassword(false);
+            saveUser.setUpdatedAt(formatter.format(new Date()));
+            userService.updateUser(saveUser);
+            String notificationContent = "You have change password at "+ new Date().toString();
+            String notificationSubject = "Change password already";
+            emailService.sendAnEmail(saveUser.getEmail(),notificationContent,notificationSubject);
+            System.out.println("Update password in Controller");
+            return ResponseEntity.ok(ACTION_SUCCESSFULLY);
+        }
+        return ResponseEntity.badRequest().body(ACTION_UNSUCCESSFULLY);
+    }
 
 }

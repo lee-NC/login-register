@@ -58,9 +58,11 @@ public class ScheduledFixed{
         refreshTokenService.updateByDelete();
     }
     @Scheduled(fixedDelay = 60000)
-    public void updateAccessToken() {
+    public void updateAccessAndVerifyToken() {
         log.info("Test access token up to time- The time is now {}", formatter.format(new Date()));
         accessTokenService.updateByDelete();
+        log.info("Test verify token up to time- The time is now {}", formatter.format(new Date()));
+        userService.updateVerifyToken();
     }
 
     @Scheduled(cron = "0 0 0 * * *")

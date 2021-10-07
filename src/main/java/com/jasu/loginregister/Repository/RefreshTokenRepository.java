@@ -19,4 +19,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>
     RefreshToken findTopByCreatedByAndDeleted (String userId, boolean deleted);
 
     List<RefreshToken> findAllByDeleted(boolean state);
+
+    RefreshToken findTopByCreatedBy(String userId);
 }

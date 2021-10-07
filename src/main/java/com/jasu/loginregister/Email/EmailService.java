@@ -1,4 +1,5 @@
 package com.jasu.loginregister.Email;
+import com.jasu.loginregister.Entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -11,6 +12,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.util.List;
+import java.util.Locale;
 
 
 @Service
@@ -30,6 +32,7 @@ public class EmailService {
         mailSender.send(message);
         System.out.println("Mail Send..."+ destinationEmail+ " successfully");
     }
+
     public void sendMultipleEmail(List<String> listEmail, String body, String subject) {
         SimpleMailMessage message = new SimpleMailMessage();
 
@@ -92,4 +95,5 @@ public class EmailService {
             System.out.println("Mail Send..."+ email+ " successfully");
         }
     }
+
 }

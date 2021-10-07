@@ -1,25 +1,31 @@
 package com.jasu.loginregister.Controller;
 
+import com.jasu.loginregister.Email.EmailService;
 import com.jasu.loginregister.Entity.*;
 import com.jasu.loginregister.Exception.ForbiddenException;
-import com.jasu.loginregister.Exception.NotFoundException;
 import com.jasu.loginregister.Jwt.JwtResponse;
 import com.jasu.loginregister.Jwt.JwtUtils;
 import com.jasu.loginregister.Model.Mapper.UserMapper;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
 import com.jasu.loginregister.Model.Request.LoginRequest;
-import com.jasu.loginregister.Model.Request.PaymentRequest;
 import com.jasu.loginregister.Model.Request.TokenRefreshRequest;
 import com.jasu.loginregister.Service.*;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.utility.RandomString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -34,9 +40,6 @@ public class PublicController {
     private UserService userService;
 
     @Autowired
-    private PaymentService paymentService;
-
-    @Autowired
     JwtUtils jwtUtils;
 
     @Autowired
@@ -48,19 +51,26 @@ public class PublicController {
     @Autowired
     AuthenticationManager authenticationManager;
 
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest){
         log.info("Login in Controller");
 
-        User checkUser = userService.loginWithEmailAndPassword(loginRequest.getEmail(),loginRequest.getPassword());
-        UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
-        if (refreshTokenService.checkTimeLogin(checkUser.getId().toString())){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            User checkUser = userService.loginWithEmailAndPassword(loginRequest.getEmail(),loginRequest.getPassword());
+            UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
+            if (refreshTokenService.checkTimeLogin(checkUser.getId().toString())
+                &&refreshTokenService.checkNearLoginTime(checkUser.getId().toString())){
 
-            String jwt = jwtUtils.generateJwtToken(userPrincipal);
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
-            accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
-            return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
-                    checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
+                String jwt = jwtUtils.generateJwtToken(userPrincipal);
+                RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
+                accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
+                return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+                        checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
+            }
         }
         throw new ForbiddenException("ACCESS DENIED");
     }
@@ -71,7 +81,8 @@ public class PublicController {
         String requestRefreshToken = request.getRefreshToken();
         RefreshToken refreshToken =  refreshTokenService.findByToken(requestRefreshToken);
         if(refreshTokenService.verifyExpiration(refreshToken) && !refreshToken.getDeleted()
-            && refreshToken.getNumUses()<24   ){
+            && refreshToken.getNumUses()<24
+            && refreshToken.getDelayTime().before(new Date())){
             String token = jwtUtils.generateTokenFromUserId(refreshToken.getUser().getId());
             refreshToken.setNumUses(refreshToken.getNumUses()+1);
             refreshTokenService.updateRefreshToken(refreshToken);
@@ -82,7 +93,7 @@ public class PublicController {
     }
 
     @PutMapping("/logout/{id}")
-    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
+    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
     @Secured("USER")
     public ResponseEntity<?> logoutUser(@PathVariable("id") Long  userId) {
         log.info("Logout in Controller");
@@ -95,42 +106,43 @@ public class PublicController {
         return ResponseEntity.ok("Log out successful!");
     }
 
-    @PostMapping("/recharge/{id}")
-    @PreAuthorize("hasAuthority('USER') && (authentication.principal.id == #userId)")
-    @Secured("USER")
-    public ResponseEntity<?> recharge(@PathVariable("id") Long  userId, @Valid @RequestBody PaymentRequest paymentRequest) {
-        log.info("Charge money in Controller");
-        User user = userService.findByID(userId);
-        if (user.getState().equals("LOGOUT")
-//                ||!user.isEnabled()
-        ){
-            throw new ForbiddenException("ACCESS DENIED");
+    @GetMapping("/reset_password")
+    public ResponseEntity<?> resetPassword(@RequestParam("email") String email){
+        log.info("Get new OTP in Controller");
+        User saveUser = userService.findByEmail(email);
+        String encodedOTP = RandomString.make(8);
+        saveUser.setOneTimePassword(encodedOTP);
+        saveUser.setOtpRequestTime(new Date(new Date().getTime() + OTP_TIME_TRACKING));
+        userService.updateUser(saveUser);
+        try {
+            sendVerificationEmail(saveUser.getEmail(),saveUser.getOneTimePassword());
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-        long coin = 0;
-        if (paymentRequest.getFee()>10){
-            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            switch (paymentRequest.getCurrency()){
-                case "VND":{
-                    coin = paymentRequest.getFee()/100L;
-                    break;
-                }
-                case "USD":{
-                    coin = paymentRequest.getFee()/100L*22753L;
-                    break;
-                }
-                default:{
-                    throw new NotFoundException("This currency is not supported");
-                }
-            }
-            Payment payment = new Payment(paymentRequest.getFee(), paymentRequest.getCurrency(),
-                    paymentRequest.getMethod(), paymentRequest.getIntent(),formatter.format(new Date()),userId);
-            paymentService.createPayment(payment);
+        emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+        return ResponseEntity.ok("Check your email to verify that this is you.");
+    }
 
-            user.setCoin(user.getCoin()+coin);
+    public void sendVerificationEmail(String email, String encodedOTP)
+            throws MessagingException, UnsupportedEncodingException {
+        VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
+        emailService.sendAnEmail(email,VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+    }
+
+    @GetMapping("/verify_password")
+    public ResponseEntity<?> verifyUserPassword(@RequestParam("code") String code,
+                                                @RequestParam("password") String password) {
+        User user = userService.verifyUserRegistry(code);
+        if (user!=null){
+            String hash = BCrypt.hashpw(password, BCrypt.gensalt(12));
+            user.setPassword(hash);
             userService.updateUser(user);
+            emailService.sendAnEmail(user.getEmail(),"You have change password at "+ new Date(),"Change password already");
             return ResponseEntity.ok(ACTION_SUCCESSFULLY);
         }
-        return ResponseEntity.badRequest().body(ACTION_UNSUCCESSFULLY);
+        return ResponseEntity.ok(ACTION_UNSUCCESSFULLY);
     }
 
     private AccessToken defineAccessToken(RefreshToken refreshToken, String jwt){
@@ -144,4 +156,5 @@ public class PublicController {
 
         return accessToken;
     }
+
 }

@@ -1,6 +1,7 @@
 package com.jasu.loginregister.Jwt;
 
 import com.jasu.loginregister.Entity.AccessToken;
+import com.jasu.loginregister.Entity.DefinitionEntity.DeRole;
 import com.jasu.loginregister.Entity.User;
 import com.jasu.loginregister.Entity.UserRole;
 import com.jasu.loginregister.Jwt.Principal.UserPrincipal;
@@ -54,11 +55,16 @@ public class AuthTokenFilter extends OncePerRequestFilter {
           String userId = jwtUtils.getUserIdFromJwtToken(jwt);
           Set<GrantedAuthority> authorities = new HashSet<>();
           UserPrincipal userPrincipal = userDetailsService.loadUserById(Long.parseLong(userId));
-          Set<UserRole>userRoles  = userRoleService.getListUserRole(userPrincipal.getId());
-          for (UserRole userRole: userRoles){
-            authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
-          }
 
+          Set<UserRole>userRoles  = userRoleService.getListUserRole(userPrincipal.getId());
+          if(!userPrincipal.isEnabled()){
+            authorities.add(new SimpleGrantedAuthority(DeRole.USER.getAuthority()));
+          }
+          else {
+            for (UserRole userRole: userRoles){
+              authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
+            }
+          }
           UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null,
                   authorities);
           authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

@@ -50,8 +50,4 @@ public class UpdateUserRequest {
 
     private MultipartFile avatar;
 
-    private UpdateTutorRequest updateTutorRequest;
-
-    private UpdateStudentRequest updateStudentRequest;
-
 }

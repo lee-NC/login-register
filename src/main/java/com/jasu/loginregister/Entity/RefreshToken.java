@@ -7,6 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -34,6 +35,9 @@ public class RefreshToken {
   @Column(nullable = false)
   private Boolean deleted;
 
+  @Column()
+  private Date delayTime;
+
   @CreatedDate
   @Column(nullable = false)
   private String createdAt;
@@ -41,6 +45,6 @@ public class RefreshToken {
   private String createdBy;
 
   @LastModifiedDate
-  private String updatedAt;
+  private Date updatedAt;
 
 }

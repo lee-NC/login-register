@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,12 +56,18 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private int numActive;
 
+    @Column()
+    private Boolean enabled;
 
-//    @Column(name = "enabled")
-//    private boolean enabled;
-//
-//    @Column(name = "verification_code", length = 64)
-//    private String verificationCode;
+    @Column()
+    private String oneTimePassword;
+
+    @Column()
+    private Date otpRequestTime;
+
+    @Column(nullable = false)
+    private Boolean changePassword;
+
 
     public User(String email, String password) {
         this.email = email;

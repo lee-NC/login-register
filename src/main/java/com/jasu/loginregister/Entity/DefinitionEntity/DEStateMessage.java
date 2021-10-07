@@ -30,10 +30,10 @@ public class DEStateMessage {
     //define number
     public static final int YEAR_ACHIEVEMENT = 1970;//thoi gian nam bat dau, gioi han
     public static final int MAX_FAILED_LOGIN = 5;//gioi han dang nhap
-    public static final int CACHE_MAX_LIMIT = 1000;//gioi han thong tin dang nhap
-    public static final long TIME_PER_HOUR = 3600000l; //là thời gian một ngày tính theo giây
+    public static final long TIME_PER_HOUR = 3600000l; //là thời gian một giờ tính theo giây
     public static final long REFRESH_EXP_DATE = 259200000l;//là thời gian 3 ngày tính theo giây
-    public static final long ACCESS_EXP_DATE = 10800000l;//là thời gian 3 giờ tính theo giây
+    public static final long OTP_TIME_TRACKING = 900000l;//là thời gian 15 phút tính theo giây
+    public static final long DELAY_TIME_REFRESH = 300000l;//là thời gian 5 phút tính theo giây
 
 
 
@@ -68,13 +68,8 @@ public class DEStateMessage {
 
 
     //Define email body
-    public static final String VERIFICATION_CONTENT = "Verifying that you registry with us.";
-
-//    public static String VERIFICATION_CONTENT = "Dear [[name]],<br>"
-//            + "Please click the link below to verify your registration:<br>"
-//            + "<h3><a href=\"[[URL]]\" target=\"_self\">VERIFY</a></h3>"
-//            + "Thank you,<br>"
-//            + "JASU Team.";
+    public static String VERIFICATION_CONTENT = "Verifying that you are registering with us.\n" +
+            "Verification code: ";
 
     public static final String WELCOME_CONTENT = "Welcome to JASU!!\n" +
             "JASU is a network of connections between students and tutors," +

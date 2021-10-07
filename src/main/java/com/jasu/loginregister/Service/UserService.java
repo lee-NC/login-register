@@ -26,6 +26,9 @@ public interface UserService {
     boolean refundUserBeRejected(List<Long> userIds, Long fee);
 
     User findByEmail(String email);
-//
-//    boolean verifyUser(String code);
+
+    User verifyUserRegistry(String code);
+
+    void updateVerifyToken();
+
 }

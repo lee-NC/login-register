@@ -19,9 +19,9 @@ import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.MAX_
 
 @Service
 public class UserPrincipalServiceImpl implements UserDetailsService {
+
   @Autowired
   private UserRepository userRepository;
-
   @Autowired
   private LoginAttemptService loginAttemptService;
 
@@ -40,9 +40,9 @@ public class UserPrincipalServiceImpl implements UserDetailsService {
   @Transactional
   public UserPrincipal loadUserById(long userId) {
 
-    String ip = RequestUtils.getClientIP(request);
+    String ip = getClientIP();
     if (loginAttemptService.isBlocked(ip)) {
-      throw new RuntimeException("block_ip");
+      throw new RuntimeException("blocked");
     }
 
     Optional<User> user = userRepository.findById(userId);
@@ -52,6 +52,14 @@ public class UserPrincipalServiceImpl implements UserDetailsService {
     }
     UserPrincipal userPrincipal = UserMapper.toUserPrincipal(user.get());
     return userPrincipal;
+  }
+
+  private String getClientIP() {
+    String xfHeader = request.getHeader("X-Forwarded-For");
+    if (xfHeader == null){
+      return request.getRemoteAddr();
+    }
+    return xfHeader.split(",")[0];
   }
 
 }

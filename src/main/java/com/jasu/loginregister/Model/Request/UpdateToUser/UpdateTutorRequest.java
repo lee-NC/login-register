@@ -1,13 +1,9 @@
 package com.jasu.loginregister.Model.Request.UpdateToUser;
 
-import com.jasu.loginregister.Model.Request.CreatedToUser.AchievementRequest;
-import com.jasu.loginregister.Model.Request.CreatedToUser.SchoolRequest;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Pattern;
-import java.util.List;
 
 @Data
 @NoArgsConstructor

@@ -15,4 +15,6 @@ public interface RefreshTokenService {
     void updateByDelete();
 
     void updateRefreshToken(RefreshToken refreshToken);
+
+    boolean checkNearLoginTime(String toString);
 }

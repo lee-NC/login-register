@@ -12,20 +12,18 @@ import com.jasu.loginregister.Model.Request.CreatedToUser.CreateAddressRequest;
 import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.xml.crypto.Data;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class UserDetailMapper {
 
     private static String UPLOAD_DIR = System.getProperty("user.home") + "/upload";
 
-    public static UserDetailDto toUserDetailDto(User user, Student student, Tutor tutor) {
+    public static UserDetailDto toUserDetailDto(User user) {
         UserDetailDto userDetailDto = new UserDetailDto();
         userDetailDto.setId(user.getId());
         userDetailDto.setFullName(user.getFullName());
@@ -33,13 +31,6 @@ public class UserDetailMapper {
         userDetailDto.setBirthday(user.getBirthday());
         userDetailDto.setAvatar(user.getAvatar());
         userDetailDto.setGender(user.getGender());
-        if (student!=null){
-            userDetailDto.setStudentDetailDto(toStudentDetailDto(student));
-        }
-        if (tutor!=null){
-            userDetailDto.setTutorDetailDto(toTutorDetailDto(tutor));
-
-        }
         return userDetailDto;
     }
 
@@ -89,6 +80,7 @@ public class UserDetailMapper {
     }
 
     public static User toUser (User user, UpdateUserRequest req){
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         if (req.getCreateAddressRequest()!=null){
             user.setAddress(toAddress(user.getAddress(),req.getCreateAddressRequest()));
         }
@@ -127,6 +119,7 @@ public class UserDetailMapper {
                 }
             }
         }
+        user.setUpdatedAt(formatter.format(new Date()));
 
         return user;
     }
