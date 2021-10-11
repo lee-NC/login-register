@@ -73,6 +73,11 @@ public class PublicController {
         throw new ForbiddenException("ACCESS DENIED");
     }
 
+    @RequestMapping("/hello")
+    public String welcome() {
+        return "hello";
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         log.info("Refresh token in Controller");

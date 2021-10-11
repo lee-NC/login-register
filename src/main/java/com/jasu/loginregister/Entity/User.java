@@ -56,7 +56,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private int numActive;
 
-    @Column()
+    @Column(nullable = false)
     private Boolean enabled;
 
     @Column()
@@ -65,7 +65,7 @@ public class User extends BaseEntity {
     @Column()
     private Date otpRequestTime;
 
-    @Column()
+    @Column(nullable = false)
     private int numGetOTP;
 
     @Column(nullable = false)
