@@ -38,7 +38,7 @@ public class UserPrincipalServiceImpl implements UserDetailsService {
   }
 
   @Transactional
-  public UserPrincipal loadUserById(long userId) {
+  public UserPrincipal loadUserById(Long userId) {
 
     String ip = getClientIP();
     if (loginAttemptService.isBlocked(ip)) {

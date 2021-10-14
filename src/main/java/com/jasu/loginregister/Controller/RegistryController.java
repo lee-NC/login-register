@@ -70,10 +70,6 @@ public class RegistryController {
         User saveUser = UserMapper.toUser(createUserRequest);
         UserDto userDto = userService.createUser(saveUser);
         userRoleService.createUserRole(userDto.getId(), DeRole.USER.getAuthority());
-
-        String encodedOTP = RandomString.make(8);
-        VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
-        emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
         return ResponseEntity.ok("Check your email to verify that you registry with us.");
     }
 

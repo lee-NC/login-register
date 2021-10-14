@@ -19,7 +19,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "addressDetail is required")
     @NotEmpty(message = "addressDetail is required")
-    @Size(max = 15)
+    @Size(max = 25)
     @ApiModelProperty(
             example="SN XX",
             notes="Password can't be empty",
@@ -29,7 +29,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "ward is required")
     @NotEmpty(message = "ward is required")
-    @Size(max = 15)
+    @Size(max = 45)
     @ApiModelProperty(
             example="Cau Dien",
             notes="ward can't be empty"
@@ -38,7 +38,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "district is required")
     @NotEmpty(message = "district is required")
-    @Size(max = 15)
+    @Size(max = 25)
     @ApiModelProperty(
             example="Cau Giay",
             notes="district can't be empty",
@@ -48,7 +48,7 @@ public class CreateAddressRequest {
 
     @NotNull(message = "province is required")
     @NotEmpty(message = "province is required")
-    @Size(max = 15)
+    @Size(max = 25)
     @ApiModelProperty(
             example="Ha Noi",
             notes="province can't be empty",

@@ -30,10 +30,12 @@ public class DEStateMessage {
     //define number
     public static final int YEAR_ACHIEVEMENT = 1970;//thoi gian nam bat dau, gioi han
     public static final int MAX_FAILED_LOGIN = 5;//gioi han dang nhap
-    public static final long TIME_PER_HOUR = 3600000l; //là thời gian một giờ tính theo giây
-    public static final long REFRESH_EXP_DATE = 259200000l;//là thời gian 3 ngày tính theo giây
-    public static final long OTP_TIME_TRACKING = 900000l;//là thời gian 15 phút tính theo giây
-    public static final long DELAY_TIME_REFRESH = 300000l;//là thời gian 5 phút tính theo giây
+    public static final long TIME_PER_HOUR = 3600000l; //là thời gian một giờ tính theo giây, accesstoken
+    public static final long REFRESH_EXP_DATE = 259200000l;//là thời gian 3 ngày tính theo giây, refreshtoken
+    public static final long OTP_TIME_TRACKING = 900000l;//là thời gian 15 phút tính theo giây, otp time
+    public static final long DELAY_TIME_REFRESH = 300000l;//là thời gian 5 phút tính theo giây, delay time refresh
+    public static final long DELETE_REFRESH_EXP = 604800000l;//là thời gian 3 ngày tính theo giây, refreshtoken
+
 
 
 

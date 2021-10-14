@@ -57,6 +57,7 @@ public class ScheduledFixed{
         log.info("Test refresh token up to time- The time is now {}", formatter.format(new Date()));
         refreshTokenService.updateByDelete();
     }
+
     @Scheduled(fixedDelay = 60000)
     public void updateAccessAndVerifyToken() {
         log.info("Test access token up to time- The time is now {}", formatter.format(new Date()));
@@ -140,6 +141,7 @@ public class ScheduledFixed{
             }
         }
     }
+
     @Scheduled(cron = "0 0 1 * * *")
     public void checkClassDoneTime() {
         log.info("Check Classroom " + new Date());
@@ -161,6 +163,13 @@ public class ScheduledFixed{
                 }
             }
         }
+    }
+
+    @Scheduled(cron = "0 0 0 1 * *")
+    public void checkRefreshDoneTime() {
+        log.info("Check RefreshToken " + new Date());
+        refreshTokenService.updateExpirationLongTimeToken();
+
     }
 
 //    @Scheduled(fixedRate = 5000)

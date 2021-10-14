@@ -12,6 +12,7 @@ import com.jasu.loginregister.Model.Request.UpdateToUser.UpdateUserRequest;
 import com.jasu.loginregister.Repository.UserRepository;
 import com.jasu.loginregister.Service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.utility.RandomString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.USER_REJECTED_CONTENT;
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.USER_REJECTED_SUBJECT;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 @Service
 @Slf4j
@@ -40,9 +40,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(User user) {
         // Check email exist
+
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateRecordException("Email is already in use");
         }
+        VERIFICATION_CONTENT = VERIFICATION_CONTENT + user.getOneTimePassword();
+        emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
         return UserMapper.toUserDto(userRepository.saveAndFlush(user));
     }
 

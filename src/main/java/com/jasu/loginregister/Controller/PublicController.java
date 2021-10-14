@@ -53,20 +53,19 @@ public class PublicController {
     private EmailService emailService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest){
+    public ResponseEntity<?> login(@Valid @RequestBody User user){
         log.info("Login in Controller");
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
-            User checkUser = userService.loginWithEmailAndPassword(loginRequest.getEmail(),loginRequest.getPassword());
+            User checkUser = userService.loginWithEmailAndPassword(user.getEmail(),user.getPassword());
             UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
-            if (refreshTokenService.checkTimeLogin(checkUser.getId().toString())
-                &&refreshTokenService.checkNearLoginTime(checkUser.getId().toString())){
+            if (refreshTokenService.checkTimeLogin(checkUser.getId().toString())){
 
                 String jwt = jwtUtils.generateJwtToken(userPrincipal);
                 RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
                 accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
-                return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+                return ResponseEntity.ok(new JwtResponse(jwt,checkUser.getId(), refreshToken.getToken(),
                         checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
             }
         }
@@ -155,7 +154,8 @@ public class PublicController {
         UserPrincipal userPrincipal = UserMapper.toUserPrincipal(checkUser);
         String jwt = jwtUtils.generateJwtToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
-        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+        accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
+        return ResponseEntity.ok(new JwtResponse(jwt,checkUser.getId(), refreshToken.getToken(),
                 checkUser.getFullName(),checkUser.getNumActive(),checkUser.getAvatar(), checkUser.getCoin()));
     }
 
@@ -176,7 +176,7 @@ public class PublicController {
                 String jwt = jwtUtils.generateJwtToken(userPrincipal);
                 RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
                 accessTokenService.createAccessToken(defineAccessToken(refreshToken,jwt));
-                return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+                return ResponseEntity.ok(new JwtResponse(jwt,user.getId(), refreshToken.getToken(),
                         user.getFullName(),user.getNumActive(),user.getAvatar(), user.getCoin()));
             }
         }

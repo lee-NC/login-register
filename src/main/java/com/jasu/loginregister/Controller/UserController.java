@@ -32,6 +32,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 
 import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 @RestController
@@ -66,28 +67,29 @@ public class UserController {
     public EmailService emailService;
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
-    @Secured({"STUDENT","TUTOR"})
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured({"USER"})
     public ResponseEntity<?> getUserById(@PathVariable("id") Long userId,Model model) {
         log.info("get student by Id in Controller");
         User user = userService.findByID(userId);
+        model.addAttribute("userDetailDto",UserDetailMapper.toUserDetailDto(user));
         Student student = null;
         Tutor tutor = null;
         if (userRoleService.existUserRole(userId, DeRole.STUDENT.getAuthority())) {
             student = studentService.findByUserId(userId);
+            model.addAttribute("studentDetailDto",UserDetailMapper.toStudentDetailDto(student));
         }
         if (userRoleService.existUserRole(userId, DeRole.TUTOR.getAuthority())) {
             tutor = tutorService.findByUserId(userId);
+            model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
         }
-        model.addAttribute("userDetailDto",UserDetailMapper.toUserDetailDto(user));
-        model.addAttribute("tutorDetailDto",UserDetailMapper.toTutorDetailDto(tutor));
-        model.addAttribute("studentDetailDto",UserDetailMapper.toStudentDetailDto(student));
+
         return ResponseEntity.ok(model);
     }
 
     @GetMapping("/coin/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
-    @Secured({"STUDENT","TUTOR"})
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured({"USER"})
     public ResponseEntity<?> getUserCoinById(@PathVariable("id") Long userId, Model model) {
         log.info("get student by Id in Controller");
         User user = userService.findByID(userId);
@@ -126,8 +128,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('STUDENT','TUTOR') && (authentication.principal.id == #userId)")
-    @Secured({"STUDENT","TUTOR"})
+    @PreAuthorize("hasAnyAuthority('USER') && (authentication.principal.id == #userId)")
+    @Secured({"USER"})
     public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserRequest req, @PathVariable("id") Long userId) {
         User user = userService.updateDetailUser(req, userId);
         return ResponseEntity.ok(UserDetailMapper.toUserDetailDto(user));

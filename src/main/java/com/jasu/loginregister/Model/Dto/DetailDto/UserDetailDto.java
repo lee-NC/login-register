@@ -22,8 +22,4 @@ public class UserDetailDto {
     private String birthday;
 
     private String avatar;
-
-    private TutorDetailDto tutorDetailDto;
-
-    private StudentDetailDto studentDetailDto;
 }

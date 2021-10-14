@@ -65,7 +65,7 @@ public class CreateUserRequest {
     @NotNull(message = "Password is required")
     @NotEmpty(message = "Password is required")
     @Pattern(regexp = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,30}$",
-            message = "Passwors must be have 8 to 30 characters, " +
+            message = "Passwords must be have 8 to 30 characters, " +
                     "1 lowcase character, 1 upcase character, 1 number, 1 special character ")
     @ApiModelProperty(
             example="Verysecretpassword123@",

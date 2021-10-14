@@ -57,13 +57,14 @@ public class AuthTokenFilter extends OncePerRequestFilter {
           UserPrincipal userPrincipal = userDetailsService.loadUserById(Long.parseLong(userId));
 
           Set<UserRole>userRoles  = userRoleService.getListUserRole(userPrincipal.getId());
-          if(!userPrincipal.isEnabled()){
-            authorities.add(new SimpleGrantedAuthority(DeRole.USER.getAuthority()));
-          }
-          else {
-            for (UserRole userRole: userRoles){
-              authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
-            }
+//          if(!userPrincipal.isEnabled()){
+//            authorities.add(new SimpleGrantedAuthority(DeRole.USER.getAuthority()));
+//          }
+//          else {
+//
+//          }
+          for (UserRole userRole: userRoles){
+            authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
           }
           UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null,
                   authorities);

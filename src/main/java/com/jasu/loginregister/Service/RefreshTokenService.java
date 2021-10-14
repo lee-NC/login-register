@@ -17,4 +17,6 @@ public interface RefreshTokenService {
     void updateRefreshToken(RefreshToken refreshToken);
 
     boolean checkNearLoginTime(String toString);
+
+    void updateExpirationLongTimeToken();
 }

@@ -19,8 +19,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.DELAY_TIME_REFRESH;
-import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.REFRESH_EXP_DATE;
+import static com.jasu.loginregister.Entity.DefinitionEntity.DEStateMessage.*;
 
 
 @Service
@@ -72,6 +71,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     if (token.getExpiryDate().compareTo(Instant.now()) < 0||user.getState().equals("LOGOUT")) {
       token.setDeleted(true);
       token.setUpdatedAt(new Date());
+      token.setUpdatedAt(new Date());
       refreshTokenRepository.saveAndFlush(token);
       user.setState("LOGOUT");
       userRepository.saveAndFlush(user);
@@ -91,6 +91,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
     try {
       refreshToken.setDeleted(true);
+      refreshToken.setUpdatedAt(new Date());
       refreshTokenRepository.saveAndFlush(refreshToken);
 
       User user = userRepository.getById(userId);
@@ -171,7 +172,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
       if (accessToken == null){
         return;
       }
-
       accessTokenRepository.delete(accessToken);
 
     }catch (Exception e){
@@ -182,12 +182,21 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Override
   public boolean checkNearLoginTime(String userId) {
     RefreshToken refreshToken = refreshTokenRepository.findTopByCreatedBy(userId);
-    if (refreshToken==null){
-      return true;
-    }
     if (refreshToken.getUpdatedAt().before(new Date(new Date().getTime()-DELAY_TIME_REFRESH))){
       return false;
     }
     return true;
+  }
+
+  @Override
+  @Transactional
+  public void updateExpirationLongTimeToken() {
+    List<RefreshToken> refreshTokenList = refreshTokenRepository.findAllByDeleted(true);
+    Instant now = (new Date(new Date().getTime() - DELETE_REFRESH_EXP)).toInstant();
+    for (RefreshToken refreshToken: refreshTokenList){
+      if (refreshToken.getExpiryDate().isBefore(now)){
+        refreshTokenRepository.delete(refreshToken);
+      }
+    }
   }
 }
