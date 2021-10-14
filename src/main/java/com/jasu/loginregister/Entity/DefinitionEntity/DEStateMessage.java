@@ -67,7 +67,7 @@ public class DEStateMessage {
     //Define email body
     public static String VERIFICATION_CONTENT = "Sorry to bother you!\n" +
             "To verify that you have taken this action, please enter the code below.\n" +
-            "Verification code: ";
+            "Verification code: {code}";
 
     public static final String WELCOME_CONTENT = "Welcome to JASU!!\n" +
             "JASU is a network of connections between students and tutors," +

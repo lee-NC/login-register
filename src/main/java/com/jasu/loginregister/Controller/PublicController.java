@@ -120,7 +120,7 @@ public class PublicController {
             saveUser.setNumGetOTP(1);
             userService.updateUser(saveUser);
 
-            VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
+            VERIFICATION_CONTENT.replace("{code}",encodedOTP);
             emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
             return ResponseEntity.ok("Check your email to verify that this is you.");
         }
@@ -139,7 +139,7 @@ public class PublicController {
             saveUser.setNumGetOTP(saveUser.getNumGetOTP()+1);
             userService.updateUser(saveUser);
 
-            VERIFICATION_CONTENT = VERIFICATION_CONTENT + encodedOTP;
+            VERIFICATION_CONTENT.replace("{code}",encodedOTP);
             emailService.sendAnEmail(saveUser.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
             return ResponseEntity.ok("Check your email to verify your action.");
         }

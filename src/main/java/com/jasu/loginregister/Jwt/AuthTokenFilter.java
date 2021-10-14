@@ -51,18 +51,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
       String jwt = parseJwt(request);
       if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
         AccessToken accessToken = accessTokenService.findByToken(jwt);
-        if (accessToken != null){
+        if (accessToken != null||!accessToken.getRefreshToken().getDeleted()){
           String userId = jwtUtils.getUserIdFromJwtToken(jwt);
           Set<GrantedAuthority> authorities = new HashSet<>();
           UserPrincipal userPrincipal = userDetailsService.loadUserById(Long.parseLong(userId));
 
           Set<UserRole>userRoles  = userRoleService.getListUserRole(userPrincipal.getId());
-//          if(!userPrincipal.isEnabled()){
-//            authorities.add(new SimpleGrantedAuthority(DeRole.USER.getAuthority()));
-//          }
-//          else {
-//
-//          }
           for (UserRole userRole: userRoles){
             authorities.add(new SimpleGrantedAuthority(userRole.getRoleKey()));
           }

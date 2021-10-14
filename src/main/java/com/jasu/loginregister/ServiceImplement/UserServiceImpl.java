@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateRecordException("Email is already in use");
         }
-        VERIFICATION_CONTENT = VERIFICATION_CONTENT + user.getOneTimePassword();
+        VERIFICATION_CONTENT.replace("{code}",user.getOneTimePassword());
         emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
         return UserMapper.toUserDto(userRepository.saveAndFlush(user));
     }
