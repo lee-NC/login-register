@@ -373,8 +373,8 @@ public class UserController {
                     paymentRequest.getMethod(), paymentRequest.getIntent(),coin,formatter.format(new Date()),
                     userId,false, encodedOTP, new Date(new Date().getTime()+OTP_TIME_TRACKING),1);
             paymentService.createPayment(payment);
-            VERIFICATION_CONTENT.replace("{code}",encodedOTP);
-            emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT,VERIFICATION_SUBJECT);
+
+            emailService.sendAnEmail(user.getEmail(),VERIFICATION_CONTENT+ encodedOTP,VERIFICATION_SUBJECT);
             return ResponseEntity.ok("Check your email to verify your action.");
         }
         return ResponseEntity.badRequest().body(ACTION_UNSUCCESSFULLY);
